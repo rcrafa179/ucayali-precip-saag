@@ -67,6 +67,8 @@ python scripts/03_diario_obs.py imerg 2005        # IMERG a diario
 
 **Mapas mensuales:** `python scripts/04_mapas_mensuales.py` lee `data/processed/saag_pr_diaria_FMA_<año>.nc` y guarda en `figures/` la climatología mensual (promedio de los años disponibles), el acumulado y los días con lluvia de cada año y un CSV de resumen. Por defecto usa `cuenca/49911.shp` (Intercuenca 49911, ANA, 4353 km², incluida en el repo); con `--shp otra.shp` usa otra cuenca. Muestra solo las celdas de 4 km que tocan la cuenca y dibuja su contorno; sin cuenca muestra todo el dominio. Los días con horas faltantes se excluyen de los acumulados.
 
+**Corridas WRF locales (`WRF2d_CTRL_*.nc`):** son recortes de la misma simulación WRF-SAAG sobre otro dominio (15.6–7.7°S, 77.0–70.5°W: Ucayali alto y medio con los Andes). `python scripts/05_wrf_ctrl.py ~/Downloads` los pasa al mismo formato diario FMA (`data/processed/wrfctrl_pr_diaria_FMA_<año>.nc`) y hace el ciclo diurno y la lluvia vs altura; luego `python scripts/04_mapas_mensuales.py --fuente wrfctrl` hace los mismos mapas mensuales (la Intercuenca 49911 queda fuera de ese dominio y se ignora).
+
 Mientras corre, `01_extraer_saag.py` imprime cada minuto una línea de estado con el avance del año, la velocidad de los últimos 5 min, los reintentos, las horas fallidas y el tiempo restante. Si los reintentos suben o la velocidad cae, NCAR está limitando: bajen `--workers`.
 
 Salidas diarias en `data/processed/`: `saag_pr_diaria_FMA_<año>.nc`, `era5_...`, `imerg_...`.

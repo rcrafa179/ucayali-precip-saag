@@ -4,6 +4,11 @@ Uso:
     python scripts/04_mapas_mensuales.py                      # todos los años de data/processed/
     python scripts/04_mapas_mensuales.py 2015 2010            # solo esos años
     python scripts/04_mapas_mensuales.py --shp ruta/cuenca.shp --nombre "Intercuenca 49911"
+    python scripts/04_mapas_mensuales.py --fuente wrfctrl    # corridas locales (ver 05_wrf_ctrl.py)
+
+Con --fuente X lee data/processed/X_pr_diaria_FMA_<año>.nc y antepone "X_" a las figuras (salvo saag).
+Si la cuenca no cae dentro del dominio, se ignora y se muestra todo el dominio. Si el dominio tiene
+relieve (> 1000 m de desnivel) se dibujan curvas de nivel de 500, 1500 y 3000 m.
 
 Si se da una cuenca (--shp, o por defecto el .shp de cuenca/ — Intercuenca 49911 — o de data/aux/), los mapas muestran solo las
 celdas de 4 km que tocan la cuenca (el resto en blanco) y dibujan su contorno. Sin cuenca se
@@ -109,15 +114,27 @@ def dibujar_contorno(ax, geom):
 
 
 # ---------------------------------------------------------------- datos
+FUENTE = "saag"
+ETIQUETA = {"saag": "WRF-SAAG 4 km", "wrfctrl": "WRF-SAAG 4 km (dominio WRF2d_CTRL)"}
+
+
+def pref(nombre):
+    return nombre if FUENTE == "saag" else f"{FUENTE}_{nombre}"
+
+
 def cargar(anio):
-    f = PROCESSED / f"saag_pr_diaria_{PERIODO}_{anio}.nc"
+    f = PROCESSED / f"{FUENTE}_pr_diaria_{PERIODO}_{anio}.nc"
     if not f.exists():
         return None
     ds = xr.open_dataset(f).load()
+    hgt = ds["HGT"].values if "HGT" in ds else None
+    ds = ds.drop_vars([v for v in ("HGT", "LANDMASK") if v in ds])
     malos = int((ds.n_horas < 24).sum())
     if malos:
         print(f"  aviso {anio}: {malos} días con horas faltantes, se excluyen de los acumulados")
-    return ds.where(ds.n_horas == 24)
+    ds = ds.where(ds.n_horas == 24)
+    ds.attrs["_hgt"] = hgt
+    return ds
 
 
 def mensual(ds):
@@ -142,6 +159,11 @@ def figura(ds, campos, mask, geom, titulo, etiqueta, archivo, subt=None):
                           cmap=CMAP, vmin=vmin, vmax=vmax, shading="nearest")
         if geom is not None:
             dibujar_contorno(ax, geom)
+        hgt = ds.attrs.get("_hgt")
+        if hgt is not None and np.nanmax(hgt) - np.nanmin(hgt) > 1000:
+            cs = ax.contour(ds.XLONG.values, ds.XLAT.values, hgt, levels=[500, 1500, 3000],
+                            colors="0.25", linewidths=[0.5, 0.6, 0.8])
+            ax.clabel(cs, fontsize=6, fmt="%d m")
         ax.set_title(NOMBRES[m] + (f" {subt}" if subt else ""), fontsize=12)
         ax.set_aspect("equal")
         ax.set_xlim(float(ds.XLONG.min()), float(ds.XLONG.max()))
@@ -150,6 +172,7 @@ def figura(ds, campos, mask, geom, titulo, etiqueta, archivo, subt=None):
     cb.set_label(etiqueta)
     fig.suptitle(titulo, fontsize=14)
     FIGURAS.mkdir(parents=True, exist_ok=True)
+    archivo = pref(archivo)
     fig.savefig(FIGURAS / archivo, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  {archivo}")
@@ -163,10 +186,13 @@ def main(anios, shp=None, nombre=None):
     for a in anios:
         ds = cargar(a)
         if ds is None:
-            print(f"{a}: no hay data/processed/saag_pr_diaria_{PERIODO}_{a}.nc, salto")
+            print(f"{a}: no hay data/processed/{FUENTE}_pr_diaria_{PERIODO}_{a}.nc, salto")
             continue
         if mask is None:
             mask = mascara_celdas(ds, geom) if geom is not None else np.ones(ds.XLAT.shape, bool)
+            if not mask.any():
+                print("  la cuenca no cae dentro de este dominio: se ignora y se muestra todo el dominio")
+                geom, sufijo, mask = None, "", np.ones(ds.XLAT.shape, bool)
             print(f"Celdas mostradas: {int(mask.sum())} de {mask.size}")
         todos[a] = (ds, mensual(ds))
     if not todos:
@@ -176,28 +202,29 @@ def main(anios, shp=None, nombre=None):
     print("Climatología")
     clim = {m: np.mean([d[m][0] for _, d in todos.values()], axis=0) for m in MESES}
     lista = ", ".join(map(str, todos))
-    figura(ds0, clim, mask, geom, f"Mapa climatológico mensual de precipitación{sufijo}\nWRF-SAAG 4 km, promedio de {lista}",
+    figura(ds0, clim, mask, geom, f"Mapa climatológico mensual de precipitación{sufijo}\n{ETIQUETA.get(FUENTE, FUENTE)}, promedio de {lista}",
            "Precipitación (mm/mes)", "mapas_climatologia.png")
     for a, (ds, d) in todos.items():
         print(a)
-        figura(ds0, {m: d[m][0] for m in MESES}, mask, geom, f"Precipitación acumulada mensual{sufijo}\nWRF-SAAG 4 km, {a}",
+        figura(ds0, {m: d[m][0] for m in MESES}, mask, geom, f"Precipitación acumulada mensual{sufijo}\n{ETIQUETA.get(FUENTE, FUENTE)}, {a}",
                "Precipitación (mm/mes)", f"mapas_total_{a}.png")
-        figura(ds0, {m: d[m][1] for m in MESES}, mask, geom, f"Días con lluvia (≥ {UMBRAL_DIA:g} mm){sufijo}\nWRF-SAAG 4 km, {a}",
+        figura(ds0, {m: d[m][1] for m in MESES}, mask, geom, f"Días con lluvia (≥ {UMBRAL_DIA:g} mm){sufijo}\n{ETIQUETA.get(FUENTE, FUENTE)}, {a}",
                "días", f"mapas_diaslluvia_{a}.png")
         for m in MESES:
             t = d[m][0][mask]
             resumen.append(dict(anio=a, mes=m, total_medio_mm=t.mean(), total_min_mm=t.min(), total_max_mm=t.max(),
                                 dias_lluvia_medio=d[m][1][mask].mean()))
     tabla = pd.DataFrame(resumen).round(1)
-    tabla.to_csv(FIGURAS / "mapas_resumen_mensual.csv", index=False)
+    tabla.to_csv(FIGURAS / pref("mapas_resumen_mensual.csv"), index=False)
     print("\nPromedio sobre las celdas mostradas:\n", tabla.to_string(index=False))
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     opc = {}
-    for k in ("--shp", "--nombre"):
+    for k in ("--shp", "--nombre", "--fuente"):
         if k in args:
             i = args.index(k); opc[k] = args[i + 1]; del args[i:i + 2]
     from pathlib import Path
+    FUENTE = opc.get("--fuente", "saag")
     main([int(x) for x in args] or ANIOS, Path(opc["--shp"]) if "--shp" in opc else None, opc.get("--nombre"))
