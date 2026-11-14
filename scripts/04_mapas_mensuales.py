@@ -119,7 +119,9 @@ def dibujar_contorno(ax, geom):
 
 # ---------------------------------------------------------------- datos
 FUENTE = "saag"
-ETIQUETA = {"saag": "WRF-SAAG 4 km", "wrfctrl": "WRF-SAAG 4 km (dominio WRF2d_CTRL)"}
+ETIQUETA = {"saag": "WRF-SAAG 4 km", "wrfctrl": "WRF-SAAG 4 km (dominio WRF2d_CTRL)",
+            "pisco": "PISCOp v2.1 0.1° (SENAMHI)", "era5": "ERA5 0.25°", "imerg": "IMERG V07 0.1°"}
+COMPLETO = {"era5": 24, "imerg": 48, "pisco": 1}
 
 
 def pref(nombre):
@@ -131,12 +133,21 @@ def cargar(anio):
     if not f.exists():
         return None
     ds = xr.open_dataset(f).load()
+    if "lat" in ds.dims:   # malla regular (PISCO, ERA5, IMERG) -> mismas coordenadas 2D que SAAG
+        ds = ds.sortby("lat").sortby("lon")
+        lo, la = np.meshgrid(ds.lon.values, ds.lat.values)
+        ds = ds.rename({"lat": "south_north", "lon": "west_east"}).drop_vars(["south_north", "west_east"], errors="ignore")
+        ds = ds.assign_coords(XLAT=(("south_north", "west_east"), la), XLONG=(("south_north", "west_east"), lo))
     hgt = ds["HGT"].values if "HGT" in ds else None
     ds = ds.drop_vars([v for v in ("HGT", "LANDMASK") if v in ds])
-    malos = int((ds.n_horas < 24).sum())
+    if "n_horas" in ds:
+        cont, completo = ds.n_horas, 24
+    else:
+        cont, completo = ds.n_pasos, COMPLETO.get(FUENTE, 1)
+    malos = int((cont < completo).sum())
     if malos:
-        print(f"  aviso {anio}: {malos} días con horas faltantes, se excluyen de los acumulados")
-    ds = ds.where(ds.n_horas == 24)
+        print(f"  aviso {anio}: {malos} días incompletos, se excluyen de los acumulados")
+    ds = ds.where(cont >= completo)
     ds.attrs["_hgt"] = hgt
     return ds
 

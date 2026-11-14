@@ -48,11 +48,11 @@ Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 | 2015 | ✅ | ✅ | ✅ | rcrafa179 |
 | Climatología y análisis (combinado) | — | ✅ | ✅ | rcrafa179 |
 
-| PISCO (imágenes) | — | ⏳ en `figures/pisco/` | — | AllSJ-23 |
+| PISCO climatología 1981–2005 (imagen) | — | ✅ `figures/pisco/` | — | AllSJ-23 |
 | ERA5 (comparación) | ✅ `era5_pr_diaria_FMA_<año>.nc` | ✅ `era5_comparacion_*` | ✅ | rcrafa179 |
 | PISCO (comparación) | ✅ `pisco_pr_diaria_FMA_<año>.nc` | ✅ `pisco_comparacion_*` | ✅ | rcrafa179 |
 
-Pendiente: subir las figuras de PISCO de AllSJ-23 (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
+Pendiente: IMERG (opcional) para una segunda referencia observacional (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
 
 ## Resultados
 
@@ -169,6 +169,32 @@ PISCOp v2.1 (SENAMHI) combina pluviómetros, la climatología de radar y el sat�
 **Distribución espacial:** los patrones dentro de la cuenca no coinciden de forma sistemática entre años. En 2015, PISCO pone el máximo en el **norte y noreste** de la cuenca, más de 1200 mm, justo donde SAAG es más seco (SAAG − PISCO de −250 a −500 mm). En 2005, SAAG es más lluvioso al este y sureste. Con tres años y pocas estaciones en la zona, no se puede hablar todavía de un sesgo espacial fijo del modelo.
 
 ![Mapas SAAG vs PISCO](figures/pisco_comparacion_mapas.png)
+
+#### PISCO con el mismo análisis que SAAG
+
+Los mismos mapas y la misma serie diaria que en las secciones 1–3, hechos con PISCO para FMA de 2005, 2010 y 2015 (`python scripts/04_mapas_mensuales.py --fuente pisco --combinado` y `python scripts/07_analisis.py --fuente pisco`). Las figuras están en `figures/` con prefijo `pisco_`. La escala de color es la de cada fuente: para comparar valores, usar los mapas de diferencia de arriba.
+
+| | 2005 | 2010 | 2015 |
+|---|---|---|---|
+| Acumulado FMA, media de la cuenca (mm) | 699 | 905 | **1022** |
+| Anomalía respecto al promedio de los 3 años | **−20 %** | +3 % | **+17 %** |
+| Febrero / Marzo / Abril (mm) | 241 / 266 / 192 | 308 / 334 / 263 | 262 / **442** / 319 |
+| Días con lluvia ≥ 1 mm (media de la cuenca) | 64 | 70 | 76 |
+| Día más lluvioso de la cuenca | 15-abr: 56 mm | 13-mar: **79 mm** | 10-mar: 50 mm |
+| Lluvia en el 10 % de días más lluviosos | 45 % | 49 % | 31 % |
+
+Los totales difieren en ~1 % de los de la tabla anterior: aquí se promedian por igual las 54 celdas que tocan la cuenca, y allá se ponderan por el área dentro de ella.
+
+![PISCO climatología FMA](figures/pisco_mapas_climatologia.png)
+
+- **El núcleo de marzo en el noreste existe también en PISCO.** Es el máximo más marcado de los tres meses (más de 550 mm/mes), en la misma zona donde SAAG pone su máximo de marzo. Al oeste y suroeste llueve menos en las dos fuentes. Es el rasgo espacial más robusto que tenemos.
+- **Entre años, PISCO va de 2005 (−20 %) a 2015 (+17 %)**, una variación mucho mayor que la de SAAG (−8 % a +9 %). Además, las anomalías de PISCO son casi uniformes en toda la cuenca, mientras que las de SAAG tienen manchas. El máximo de 2015 en PISCO viene sobre todo de marzo (442 mm).
+- **Día a día**, PISCO muestra los mismos pulsos de 1–3 días. Los eventos más fuertes de 2010 (4–6 de febrero, 13 de marzo, 31 de marzo y 4–7 de abril) son más intensos que en SAAG, aunque SAAG sí tiene lluvia en varios de esos días.
+
+![PISCO serie diaria](figures/pisco_analisis_serie_diaria.png)
+![PISCO anomalía FMA](figures/pisco_analisis_anomalia_FMA.png)
+
+Mapas por año: [2005](figures/pisco_mapas_total_2005.png), [2010](figures/pisco_mapas_total_2010.png), [2015](figures/pisco_mapas_total_2015.png). Como contexto de largo plazo, en `figures/pisco/` está la climatología mensual de PISCO de **1981–2005** (12 meses). No es directamente comparable con el promedio de nuestros tres años.
 
 #### ¿Mejora la convección explícita a ERA5? (pregunta 4)
 

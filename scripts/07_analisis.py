@@ -1,7 +1,8 @@
 """Análisis de los resultados SAAG FMA sobre la Intercuenca 49911 (todos los años en data/processed/).
 
 Uso:
-    python scripts/07_analisis.py
+    python scripts/07_analisis.py                  # WRF-SAAG
+    python scripts/07_analisis.py --fuente pisco   # lo mismo con PISCO (archivos con prefijo pisco_)
 
 Escribe en figures/:
     analisis_serie_diaria.png     lluvia diaria media de la cuenca, un panel por año
@@ -25,6 +26,9 @@ mapas = u.module_from_spec(s); s.loader.exec_module(mapas)
 
 UMBRAL = 1.0
 COLOR = {2005: "#4292c6", 2010: "#e6550d", 2015: "#31a354"}
+
+
+ETQ = "WRF-SAAG 4 km"
 
 
 def main():
@@ -59,7 +63,7 @@ def main():
         ))
     tabla = pd.DataFrame(filas).round(2)
     FIGURAS.mkdir(parents=True, exist_ok=True)
-    tabla.to_csv(FIGURAS / "analisis_resumen_FMA.csv", index=False)
+    tabla.to_csv(FIGURAS / mapas.pref("analisis_resumen_FMA.csv"), index=False)
     print(tabla.T.to_string())
 
     # serie diaria
@@ -71,9 +75,9 @@ def main():
         ax.set_ylabel("mm/día"); ax.grid(axis="y", alpha=0.3, lw=0.5)
         ax.margins(x=0.01)
     np.atleast_1d(axs)[0].legend(frameon=False, fontsize=8)
-    fig.suptitle(f"Lluvia diaria media sobre la {nombre} — WRF-SAAG 4 km", fontsize=12)
+    fig.suptitle(f"Lluvia diaria media sobre la {nombre} — {ETQ}", fontsize=12)
     fig.tight_layout()
-    fig.savefig(FIGURAS / "analisis_serie_diaria.png", dpi=150); plt.close(fig)
+    fig.savefig(FIGURAS / mapas.pref("analisis_serie_diaria.png"), dpi=150); plt.close(fig)
 
     # anomalía del acumulado FMA respecto al promedio de los años
     clim = np.mean(list(totales.values()), axis=0)
@@ -88,8 +92,8 @@ def main():
         ax.set_aspect("equal")
     cb = fig.colorbar(h, ax=list(axs[0]), orientation="horizontal", fraction=0.05, pad=0.1, shrink=0.7, extend="both")
     cb.set_label("Anomalía del acumulado FMA respecto al promedio 2005–2010–2015 (%)")
-    fig.suptitle(f"Anomalía de precipitación FMA — {nombre}, WRF-SAAG 4 km", fontsize=13, y=1.02)
-    fig.savefig(FIGURAS / "analisis_anomalia_FMA.png", dpi=150, bbox_inches="tight"); plt.close(fig)
+    fig.suptitle(f"Anomalía de precipitación FMA — {nombre}, {ETQ}", fontsize=13, y=1.02)
+    fig.savefig(FIGURAS / mapas.pref("analisis_anomalia_FMA.png"), dpi=150, bbox_inches="tight"); plt.close(fig)
 
     # distribución de intensidades
     fig, ax = plt.subplots(figsize=(8, 4.4))
@@ -99,12 +103,16 @@ def main():
         pr = pr[pr >= UMBRAL]
         ax.hist(pr, bins=bordes, density=True, histtype="step", lw=2, color=COLOR.get(a, "0.4"), label=str(a))
     ax.set_xscale("log"); ax.set_yscale("log")
-    ax.set_xlabel("Lluvia diaria en una celda de 4 km (mm/día, días ≥ 1 mm)"); ax.set_ylabel("Densidad")
+    ax.set_xlabel(f"Lluvia diaria en una celda ({ETQ}; días ≥ 1 mm), mm/día"); ax.set_ylabel("Densidad")
     ax.grid(alpha=0.3, lw=0.5, which="both"); ax.legend(frameon=False)
     ax.set_title(f"Distribución de la lluvia diaria — {nombre}, FMA", fontsize=11)
-    fig.savefig(FIGURAS / "analisis_intensidad.png", dpi=150, bbox_inches="tight"); plt.close(fig)
+    fig.savefig(FIGURAS / mapas.pref("analisis_intensidad.png"), dpi=150, bbox_inches="tight"); plt.close(fig)
     print("figuras: analisis_serie_diaria.png, analisis_anomalia_FMA.png, analisis_intensidad.png")
 
 
 if __name__ == "__main__":
+    import sys
+    if "--fuente" in sys.argv:
+        mapas.FUENTE = sys.argv[sys.argv.index("--fuente") + 1]
+        ETQ = mapas.ETIQUETA.get(mapas.FUENTE, mapas.FUENTE)
     main()
