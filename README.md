@@ -77,6 +77,32 @@ Cada archivo incluye un contador de pasos válidos por día (`n_horas` / `n_paso
 
 Plan completo y reparto de tareas: [`docs/plan.md`](docs/plan.md).
 
+## Cómo subir resultados al repositorio
+
+Cada integrante extrae su año y sube **solo los archivos de su año**: así nadie pisa el trabajo de otro y no hay conflictos.
+
+| Qué | Dónde | ¿Va al repo? |
+|---|---|---|
+| Datos crudos (horarios, ERA5, IMERG…) | `data/raw/` | No (pesados) |
+| Resultado diario FMA de cada año | `data/processed/<fuente>_pr_diaria_FMA_<año>.nc` | **Sí** (< 10 MB) |
+| Figuras y tablas | `figures/` | **Sí** |
+
+1. Extraer el año y comprobar `89 días | incompletos: 0`:
+   ```bash
+   git pull
+   python scripts/01_extraer_saag.py 2010 --workers 20
+   ```
+2. Subir **solo los archivos de ese año** (el `.nc` y sus mapas por año):
+   ```bash
+   git add data/processed/saag_pr_diaria_FMA_2010.nc figures/*_2010.png
+   git commit -m "SAAG: resultados FMA 2010"
+   git pull --rebase
+   git push
+   ```
+3. Las figuras que combinan años (`mapas_climatologia.png`, `mapas_total_comparacion.png`, `*_resumen_*.csv`) las regenera **una sola persona** (coordinación) cuando ya están todos los `.nc`; como los `.nc` están en el repo, basta `git pull` y `python scripts/04_mapas_mensuales.py`, sin volver a descargar nada.
+
+No usar `git add .` ni `git add figures/` completo: subiría versiones de las figuras combinadas hechas con años incompletos.
+
 ## Reglas del grupo
 
 - **No subir datos** (`*.nc`, `*.zarr`, `*.HDF5`): ya están en `.gitignore`. Cada uno descarga los suyos.

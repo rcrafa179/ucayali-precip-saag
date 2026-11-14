@@ -31,3 +31,7 @@ __pycache__/
 # Logs de extracción
 *.log
 nohup.out
+
+# Resultados procesados (pequeños, pocos MB): SÍ van al repo para compartirlos entre el grupo.
+# Los datos crudos (data/raw/) siguen fuera.
+!data/processed/*.nc
