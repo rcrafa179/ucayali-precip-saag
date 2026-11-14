@@ -65,6 +65,8 @@ python scripts/03_diario_obs.py era5 2005         # ERA5 a diario
 python scripts/03_diario_obs.py imerg 2005        # IMERG a diario
 ```
 
+**Mapas mensuales:** `python scripts/04_mapas_mensuales.py` (o `... 2015`) lee `data/processed/saag_pr_diaria_FMA_<año>.nc` y guarda en `figures/` el acumulado mensual (mm/mes), los días con lluvia (≥ 1 mm), una comparación años × meses y un CSV con el promedio del dominio. Los días con horas faltantes se excluyen de los acumulados.
+
 Mientras corre, `01_extraer_saag.py` imprime cada minuto una línea de estado con el avance del año, la velocidad de los últimos 5 min, los reintentos, las horas fallidas y el tiempo restante. Si los reintentos suben o la velocidad cae, NCAR está limitando: bajen `--workers`.
 
 Salidas diarias en `data/processed/`: `saag_pr_diaria_FMA_<año>.nc`, `era5_...`, `imerg_...`.
