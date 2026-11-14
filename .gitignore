@@ -1,0 +1,33 @@
+# Datos (cada uno descarga los suyos)
+data/**
+!data/**/
+!data/**/.gitkeep
+*.nc
+*.nc4
+*.zarr/
+*.HDF5
+*.h5
+*.grib
+*.grb2
+*.tif
+*.zip
+
+# Credenciales
+.cdsapirc
+.netrc
+.urs_cookies
+*.env
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Sistema / editores
+.DS_Store
+.vscode/
+.idea/
+
+# Logs de extracción
+*.log
+nohup.out

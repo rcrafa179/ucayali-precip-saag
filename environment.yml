@@ -1,0 +1,24 @@
+name: ucayali
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - xarray
+  - netcdf4
+  - h5netcdf
+  - dask
+  - numpy
+  - pandas
+  - scipy
+  - zarr
+  - xesmf
+  - regionmask
+  - geopandas
+  - shapely
+  - pyproj
+  - matplotlib
+  - cartopy
+  - cdsapi
+  - jupyterlab
+  - ipykernel
+  - nbstripout
