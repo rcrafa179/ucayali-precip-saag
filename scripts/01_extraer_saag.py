@@ -11,6 +11,11 @@ Uso (desde la raíz del repo):
     python scripts/01_extraer_saag.py 2005                 # FMA 2005 (reanudable por mes)
     python scripts/01_extraer_saag.py 2005 --workers 8
 
+Medidor de avance: mientras corre imprime cada ~30 s una línea de estado, p. ej.
+  [2005-03] 1203/2136 h (56%) | 31.2 h/min (1.9 s/h) | reintentos 4 | fallidas 0 | transcurrido 0:38:10 | faltan ~0:29:05
+La velocidad es la de los últimos 5 min (no el promedio total) y el tiempo restante sale de ella.
+Si "reintentos" sube o la velocidad cae, NCAR está limitando: bajar --workers.
+
 Salida:
     data/raw/saag/<año>/saag_pr_diaria_<YYYYMM>.nc   (checkpoint mensual)
     data/processed/saag_pr_diaria_FMA_<año>.nc       (FMA completo, al terminar)
@@ -22,6 +27,7 @@ Verificado con wrf2d_d01_2015-01-10_120000.nc:
   - Archivos: hist2D/<YYYYMM>/wrf2d_d01_<YYYY-MM-DD>_<HHMMSS>.nc
 """
 import sys, time
+from collections import deque
 from multiprocessing import Pool
 import numpy as np
 import pandas as pd
@@ -79,21 +85,69 @@ def url_recorte(t, caja):
     return f"{url_hora(t)}?{VAR}[0:1:0][{y0}:1:{y1-1}][{x0}:1:{x1-1}]"
 
 
+def hms(seg):
+    seg = int(max(seg, 0))
+    return f"{seg // 3600}:{seg % 3600 // 60:02d}:{seg % 60:02d}"
+
+
+class Progreso:
+    """Medidor de avance del año: una línea de estado cada INTERVALO segundos."""
+    INTERVALO = 30    # s entre líneas de estado
+    VENTANA = 300     # s de historia usados para la velocidad actual
+    MIN_HIST = 20     # s de historia mínima antes de mostrar velocidad y tiempo restante
+
+    def __init__(self, anio, total):
+        self.anio, self.total = anio, total
+        self.hechas = self.fallidas = self.reintentos = 0
+        self.t0 = self.ultimo = time.time()
+        self.hist = deque([(self.t0, 0)])
+
+    def saltar(self, n):
+        """Horas de meses que ya estaban guardados: cuentan como hechas."""
+        self.hechas += n
+        self.hist = deque([(time.time(), self.hechas)])
+
+    def registrar(self, mes, reintentos, fallo):
+        ahora = time.time()
+        self.hechas += 1
+        self.reintentos += reintentos
+        self.fallidas += bool(fallo)
+        self.hist.append((ahora, self.hechas))
+        while len(self.hist) > 2 and ahora - self.hist[0][0] > self.VENTANA:
+            self.hist.popleft()
+        if ahora - self.ultimo >= self.INTERVALO or self.hechas == self.total:
+            self.ultimo = ahora
+            self.imprimir(mes, ahora)
+
+    def imprimir(self, mes, ahora):
+        t_ini, h_ini = self.hist[0]
+        dt, dh = ahora - t_ini, self.hechas - h_ini
+        if dt >= self.MIN_HIST and dh > 0:
+            vel = dh / dt                                   # horas por segundo
+            vel_txt = f"{vel * 60:.1f} h/min ({1 / vel:.1f} s/h)"
+            resta = hms((self.total - self.hechas) / vel)
+        else:
+            vel_txt, resta = "midiendo…", "calculando…"
+        print(f"[{self.anio}-{mes:02d}] {self.hechas}/{self.total} h "
+              f"({100 * self.hechas / self.total:.0f}%) | {vel_txt} | reintentos {self.reintentos} | "
+              f"fallidas {self.fallidas} | transcurrido {hms(ahora - self.t0)} | faltan ~{resta}", flush=True)
+
+
 def leer_hora(args):
-    """Devuelve (t, array 2D float32) o (t, None) si falla tras los reintentos."""
+    """Devuelve (t, array 2D float32 | None, reintentos). None si falla tras todos los reintentos."""
     t, caja = args
     url = url_recorte(t, caja)
     for intento in range(REINTENTOS):
         try:
             with netCDF4.Dataset(url) as nc:
                 a = nc.variables[VAR][0, :, :]
-            return t, np.ma.filled(a.astype("float32"), np.nan)
+            return t, np.ma.filled(a.astype("float32"), np.nan), intento
         except Exception as e:
             espera = 10 * (intento + 1)
             print(f"  {t} intento {intento+1} falló ({e}); reintento en {espera}s", flush=True)
             time.sleep(espera)
     print(f"  !! {t} sin datos tras {REINTENTOS} intentos", flush=True)
-    return t, None
+    return t, None, REINTENTOS
 
 
 def prueba(workers):
@@ -106,37 +160,39 @@ def prueba(workers):
     with Pool(workers) as p:
         res = p.map(leer_hora, [(h, caja) for h in horas])
     dt = time.time() - t0
-    ok = [a for _, a in res if a is not None]
+    ok = [a for _, a, _ in res if a is not None]
+    reint = sum(r for _, _, r in res)
     if not ok:
         sys.exit("No se pudo leer ninguna hora. Revisa la URL de arriba.")
     total = np.sum(ok, axis=0)
-    print(f"{len(ok)}/24 horas OK en {dt:.0f} s ({dt/24:.1f} s/h) | lluvia del día: "
+    print(f"{len(ok)}/24 horas OK en {dt:.0f} s ({dt/24:.1f} s/h) | reintentos {reint} | lluvia del día: "
           f"media {np.nanmean(total):.1f} mm, máx {np.nanmax(total):.1f} mm")
     n_h = len(dias(2005)) * 24
     print(f"-> FMA de un año ({n_h} h): ~{dt/24*n_h/3600:.1f} h")
 
 
-def extraer_mes(anio, mes, caja, malla, workers):
+def extraer_mes(anio, mes, caja, malla, workers, progreso):
     y0, y1, x0, x1 = caja
     f = SALIDA / str(anio) / f"saag_pr_diaria_{anio}{mes:02d}.nc"
+    ds_mes = [d for d in dias(anio) if d.month == mes]
     if f.exists():
         with xr.open_dataset(f) as viejo:
             igual = viejo.attrs.get("caja_indices") == f"y[{y0}:{y1}] x[{x0}:{x1}]"
         if igual:
-            print(f"{f.name} ya existe, salto"); return f
+            print(f"{f.name} ya existe, salto")
+            progreso.saltar(len(ds_mes) * 24)
+            return f
         sys.exit(f"{f} es de otro dominio. Muévelo o bórralo y vuelve a correr.")
     f.parent.mkdir(parents=True, exist_ok=True)
-    ds_mes = [d for d in dias(anio) if d.month == mes]
     tareas = [(h, caja) for d in ds_mes for h in horas_del_dia(d)]
     pos = {h: i for i, (h, _) in enumerate(tareas)}       # hora -> posición
     horario = np.full((len(tareas), y1 - y0, x1 - x0), np.nan, dtype="float32")
     t0 = time.time()
     with Pool(workers) as p:
-        for n, (t, a) in enumerate(p.imap_unordered(leer_hora, tareas), 1):
+        for t, a, reint in p.imap_unordered(leer_hora, tareas):
             if a is not None:
                 horario[pos[t]] = a
-            if n % 24 == 0:
-                print(f"  {anio}-{mes:02d}: {n}/{len(tareas)} h ({(time.time()-t0)/n:.1f} s/h)", flush=True)
+            progreso.registrar(mes, reint, a is None)
     horario = horario.reshape(len(ds_mes), 24, y1 - y0, x1 - x0)
     n_horas = np.isfinite(horario).all(axis=(2, 3)).sum(axis=1).astype("int8")
     pr = np.nansum(horario, axis=1)
@@ -160,7 +216,8 @@ def extraer_mes(anio, mes, caja, malla, workers):
 def extraer_anio(anio, workers):
     caja = indices_caja()
     malla = xr.open_dataset(SALIDA / "malla_ucayali.nc")
-    archivos = [extraer_mes(anio, m, caja, malla, workers) for m in MESES]
+    progreso = Progreso(anio, len(dias(anio)) * 24)
+    archivos = [extraer_mes(anio, m, caja, malla, workers, progreso) for m in MESES]
     ds = xr.concat([xr.open_dataset(f) for f in archivos], dim="time").load()
     if "HGT" in malla:
         ds["HGT"] = (("south_north", "west_east"), malla["HGT"].values, {"units": "m"})
