@@ -32,13 +32,15 @@ BANDAS = [(0, 500, "< 500 m (llano amazónico)"), (500, 1500, "500–1500 m (pie
 COLORES = ["#9ecae1", "#4292c6", "#08519c", "#08306b"]   # una sola gama: bandas ordenadas por altura
 
 
-def abrir_anio(carpeta, anio):
+def abrir_anio(carpeta, anio, horas):
     fs = sorted(Path(carpeta).expanduser().glob(f"WRF2d_CTRL_{anio}*.nc"))
     if not fs:
         return None
     print(f"{anio}: {len(fs)} archivos")
     partes = [xr.open_dataset(f) for f in fs]
-    ds = xr.concat([p[["PREC_ACC_NC"]] for p in partes], dim="Time")   # HGT/LANDMASK no dependen del tiempo
+    trozos = [p[["PREC_ACC_NC"]].sel(Time=p.Time.isin(horas)) for p in partes]   # solo las horas de FMA
+    trozos = [t for t in trozos if t.sizes["Time"]] or [partes[0][["PREC_ACC_NC"]].isel(Time=[])]
+    ds = xr.concat(trozos, dim="Time")   # HGT/LANDMASK no dependen del tiempo
     ds["HGT"], ds["LANDMASK"] = partes[0]["HGT"], partes[0]["LANDMASK"]
     t = pd.DatetimeIndex(ds.Time.values)
     if t.duplicated().any():
@@ -47,12 +49,12 @@ def abrir_anio(carpeta, anio):
 
 
 def procesar(carpeta, anio):
-    ds = abrir_anio(carpeta, anio)
+    fechas = dias(anio)
+    horas = pd.DatetimeIndex(np.concatenate([horas_del_dia(d) for d in fechas]))
+    ds = abrir_anio(carpeta, anio, horas)
     if ds is None:
         print(f"{anio}: no hay WRF2d_CTRL_{anio}*.nc en {carpeta}, salto")
         return None
-    fechas = dias(anio)
-    horas = pd.DatetimeIndex(np.concatenate([horas_del_dia(d) for d in fechas]))
     pr = ds.PREC_ACC_NC.reindex(Time=horas).values.astype("float32")          # faltantes -> NaN
     ny, nx = pr.shape[1:]
     pr_h = pr.reshape(len(fechas), 24, ny, nx)
