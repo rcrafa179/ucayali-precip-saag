@@ -44,7 +44,7 @@ Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 | Año | `.nc` diario | Mapas | CSV | Responsable |
 |---|---|---|---|---|
 | 2005 | ✅ | ✅ | ✅ | brunedu21 |
-| 2010 | ✅ | ✅ | ✅ | giswllmp |
+| 2010 | ✅ | ✅ | ✅ | giswllmp (extracción y mapas; `.nc` y CSV subidos por rcrafa179) |
 | 2015 | ✅ | ✅ | ✅ | rcrafa179 |
 | Climatología y análisis (combinado) | — | ✅ | ✅ | rcrafa179 |
 
