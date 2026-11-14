@@ -18,7 +18,7 @@ Salida:
 
 Verificado con wrf2d_d01_2015-01-10_120000.nc:
   - PREC_ACC_NC [mm], PREC_ACC_DT = 60 min -> lluvia de la hora previa. CU_PHYSICS = 0.
-  - Malla 1471 x 2027, fila 0 = sur. Dominio actual (5.3-4.4°S, 74.0-73.1°W) = y[1439:1467] x[292:319] (28 x 27).
+  - Malla 1471 x 2027, fila 0 = sur. Dominio actual (5.3-4.4°S, 74.0-73.0°W) = y[1439:1467] x[292:322] (28 x 30).
   - Archivos: hist2D/<YYYYMM>/wrf2d_d01_<YYYY-MM-DD>_<HHMMSS>.nc
 """
 import sys, time
@@ -120,7 +120,11 @@ def extraer_mes(anio, mes, caja, malla, workers):
     y0, y1, x0, x1 = caja
     f = SALIDA / str(anio) / f"saag_pr_diaria_{anio}{mes:02d}.nc"
     if f.exists():
-        print(f"{f.name} ya existe, salto"); return f
+        with xr.open_dataset(f) as viejo:
+            igual = viejo.attrs.get("caja_indices") == f"y[{y0}:{y1}] x[{x0}:{x1}]"
+        if igual:
+            print(f"{f.name} ya existe, salto"); return f
+        sys.exit(f"{f} es de otro dominio. Muévelo o bórralo y vuelve a correr.")
     f.parent.mkdir(parents=True, exist_ok=True)
     ds_mes = [d for d in dias(anio) if d.month == mes]
     tareas = [(h, caja) for d in ds_mes for h in horas_del_dia(d)]

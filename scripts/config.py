@@ -11,7 +11,7 @@ PERIODO = "FMA"
 
 # Dominio de trabajo (grados): Ucayali bajo, entre Requena y la confluencia con el Marañón (Nauta)
 LAT_MIN, LAT_MAX = -5.3, -4.4
-LON_MIN, LON_MAX = -74.0, -73.1
+LON_MIN, LON_MAX = -74.0, -73.0
 AREA_CDS = [LAT_MAX, LON_MIN, LAT_MIN, LON_MAX]  # N, O, S, E (formato Copernicus)
 
 # ---------------- Día pluviométrico ----------------
