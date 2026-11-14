@@ -1,0 +1,4 @@
+anio,total_FMA_mm,total_FMA_min_celda,total_FMA_max_celda,dias_lluvia_cuenca,dias_lluvia_por_celda,intensidad_mm_dia,p95_mm_dia,max_celda_mm_dia,dia_max_cuenca,max_cuenca_mm,dias_cuenca_mayor_20mm,frac_lluvia_en_top10pct_dias
+2005,784.73,520.61,1151.76,64,44.48,17.44,61.31,179.07,2005-03-23,55.54,15,0.43
+2010,933.19,603.81,1540.91,65,47.52,19.48,63.46,199.85,2010-03-09,48.23,22,0.32
+2015,839.79,433.82,1270.38,70,50.15,16.6,55.46,166.85,2015-04-01,43.35,10,0.33

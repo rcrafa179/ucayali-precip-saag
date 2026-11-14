@@ -24,7 +24,7 @@ Preguntas guía:
 | Cuenca | **Intercuenca 49911** (ANA, Bajo Ucayali, 4353 km²): `cuenca/49911.shp`, incluida en el repo |
 | Relieve | llano amazónico, 90–180 m |
 
-La caja se define en `scripts/config.py`. Los mapas muestran solo las 372 celdas que tocan la cuenca.
+La caja se define en `scripts/config.py`. Los mapas y estadísticas usan solo las 330 celdas de 4 km que tocan la cuenca.
 
 ## Datos
 
@@ -44,11 +44,73 @@ Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 | Año | `.nc` diario | Mapas | CSV | Responsable |
 |---|---|---|---|---|
 | 2005 | ✅ | ✅ | ✅ | brunedu21 |
-| 2010 | ❌ falta | ✅ | ❌ falta | giswllmp |
+| 2010 | ✅ | ✅ | ✅ | giswllmp |
 | 2015 | ✅ | ✅ | ✅ | rcrafa179 |
-| Climatología (combinado) | — | ⚠️ hecha solo con 2005 y 2015 | ⚠️ ídem | rcrafa179 |
+| Climatología y análisis (combinado) | — | ✅ | ✅ | rcrafa179 |
 
-Pendiente: subir el `.nc` y el CSV de 2010 (`python scripts/06_subir_anio.py 2010`) y luego rehacer la climatología con `--combinado`.
+Pendiente: comparar con PISCO, IMERG y ERA5 (preguntas 1–4).
+
+## Resultados
+
+Todo lo que sigue es **WRF-SAAG (4 km) sobre la Intercuenca 49911**, FMA de 2005, 2010 y 2015, con día pluviométrico de 07:00 a 07:00 hora local. Todavía **no hay comparación con observaciones**, así que se describe lo que simula el modelo, no si acierta. Los números salen de `figures/mapas_resumen_mensual_todos.csv` y `figures/analisis_resumen_FMA.csv`, y se reproducen con `python scripts/04_mapas_mensuales.py --combinado` y `python scripts/07_analisis.py`.
+
+### Resumen por año
+
+| | 2005 | 2010 | 2015 |
+|---|---|---|---|
+| Acumulado FMA, media de la cuenca (mm) | 785 | **933** | 840 |
+| Anomalía respecto al promedio de los 3 años | −8 % | **+9 %** | −1 % |
+| Rango entre celdas (mm) | 521–1152 | 604–1541 | 434–1270 |
+| Febrero / Marzo / Abril (mm) | 166 / 296 / 322 | 373 / 307 / 253 | 192 / 342 / 306 |
+| Días con lluvia ≥ 1 mm (media de la cuenca) | 64 | 65 | **70** |
+| Días con lluvia ≥ 1 mm (por celda, promedio) | 44 | 48 | **50** |
+| Intensidad media en días con lluvia (mm/día) | 17.4 | **19.5** | 16.6 |
+| Percentil 95 diario por celda (mm/día) | 61 | **63** | 55 |
+| Máximo diario en una celda (mm) | 179 | **200** | 167 |
+| Día más lluvioso, media de la cuenca | 23-mar: **56 mm** | 9-mar: 48 mm | 1-abr: 43 mm |
+| Días con más de 20 mm en la media de la cuenca | 15 | **22** | 10 |
+| Lluvia caída en el 10 % de días más lluviosos | **43 %** | 32 % | 33 % |
+
+### 1. Distribución espacial y ciclo mensual
+
+![Climatología mensual](figures/mapas_climatologia.png)
+
+- **Marzo es el mes más lluvioso** en promedio (315 mm), seguido de abril (294 mm) y febrero (244 mm). En los tres años, febrero es el mes con más variación: va de 166 mm en 2005 a 373 mm en 2010.
+- **La lluvia no es uniforme dentro de la cuenca.** El oeste y el suroeste (hacia Requena) reciben menos, unos 150–250 mm/mes. En marzo hay un núcleo de 400–480 mm/mes en el norte (hacia Nauta) y en abril se desplaza al este y sureste de la cuenca. Dentro de una cuenca de solo 4353 km², el acumulado FMA de una celda puede ser **2 a 3 veces** el de otra.
+- Como el terreno es plano (90–180 m), esta estructura no viene del relieve. Es la huella de sistemas convectivos organizados que el modelo resuelve explícitamente a 4 km. Con solo tres años, parte de ese patrón todavía es "ruido" de unas pocas tormentas grandes, no un rasgo climatológico.
+
+Mapas de cada año: [2005](figures/mapas_total_2005.png), [2010](figures/mapas_total_2010.png), [2015](figures/mapas_total_2015.png). Días con lluvia: [2005](figures/mapas_diaslluvia_2005.png), [2010](figures/mapas_diaslluvia_2010.png), [2015](figures/mapas_diaslluvia_2015.png).
+
+### 2. Diferencias entre años
+
+![Anomalía FMA](figures/analisis_anomalia_FMA.png)
+
+- **2010 es el FMA más lluvioso (+9 %)**, sobre todo por un febrero muy húmedo (373 mm, más del doble que en 2005). El exceso se concentra en el norte de la cuenca, donde pasa del +30 %.
+- **2005 es el más seco (−8 %)**, con déficit en casi toda la cuenca y más marcado en el este. Su febrero fue el más seco de los tres, aunque abril fue el más lluvioso.
+- **2015 queda en el promedio (−1 %)**, pero con un dipolo: el norte está seco (−20 a −30 %) y el centro-sur es más húmedo.
+- **Las sequías amazónicas de 2005 y 2010 no se ven en FMA.** Esas sequías fueron sobre todo de la estación seca (julio a octubre), y en febrero–abril 2010 es justamente el año más lluvioso. Para la sequía habría que mirar otros meses, y para El Niño 2015 su desarrollo posterior.
+
+### 3. Variabilidad diaria, intensidad y extremos
+
+![Serie diaria](figures/analisis_serie_diaria.png)
+
+- La lluvia llega en **pulsos de 1–3 días** con 20–55 mm de media en la cuenca, separados por días casi secos. Es el comportamiento típico de la convección amazónica.
+- **2005 es el año más concentrado:** el 43 % de su lluvia de FMA cayó en solo 9 días, y tiene el día más intenso de la cuenca (23 de marzo, 56 mm). Febrero y la primera mitad de marzo fueron muy secos.
+- **2010 tiene más días fuertes:** 22 días con más de 20 mm en la media de la cuenca, y un inicio de febrero con lluvia casi diaria.
+- **2015 llueve más seguido pero menos intenso:** es el año con más días de lluvia (70) y con la menor intensidad media y el menor percentil 95. Su lluvia está más repartida en el tiempo.
+
+![Distribución de intensidades](figures/analisis_intensidad.png)
+
+- Las distribuciones de lluvia diaria por celda son casi iguales hasta unos 50 mm/día. Las diferencias entre años aparecen en la cola: 2010 y 2005 tienen más días de más de 100 mm que 2015, y el máximo de una celda llega a 200 mm/día en 2010.
+- Por celda, llueve (≥ 1 mm) en la mitad de los días de FMA (44–50 de 89). En cambio, la media de la cuenca supera 1 mm en 64–70 días: casi siempre está lloviendo en *alguna* parte de la cuenca.
+
+### Conclusiones preliminares y cautelas
+
+1. En la Intercuenca 49911, el WRF-SAAG simula unos **780–930 mm entre febrero y abril**, con **marzo como mes más lluvioso** y un gradiente de **menos lluvia al oeste y más al norte y al este**.
+2. Las diferencias entre años son moderadas en el total (±9 %), pero grandes en el reparto mensual (febrero) y en cómo se concentra la lluvia (2005 frente a 2015).
+3. **Falta la evaluación.** Sin PISCO, IMERG y ERA5 no se puede decir si estos totales, gradientes o extremos son reales o sesgos del modelo. Es el siguiente paso.
+4. **Tres años no son una climatología.** Lo que aquí se llama "climatología" es el promedio de 2005, 2010 y 2015, útil solo como referencia para comparar esos años entre sí.
+5. Los máximos aislados de una sola celda (más de 150 mm/día) deben tomarse con cuidado: a 4 km una tormenta puede caer en un punto en el modelo y unos km más allá en la realidad.
 
 ## Estructura
 
@@ -89,6 +151,7 @@ Todos los comandos se corren **desde la raíz del repo**.
 | `04_mapas_mensuales.py` | Mapas mensuales y CSV de resumen sobre la cuenca |
 | `05_wrf_ctrl.py` | Corridas locales `WRF2d_CTRL_*.nc` de otro dominio (solo uso local, ver abajo) |
 | `06_subir_anio.py` | Sube al repo los resultados de un año, siempre de la misma forma |
+| `07_analisis.py` | Serie diaria, anomalías, intensidad y extremos de todos los años (sección Resultados) |
 
 ### 1. Extraer SAAG
 
