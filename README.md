@@ -101,6 +101,8 @@ Cada integrante extrae su año y sube **solo los archivos de su año**: así nad
    ```
 3. Las figuras que combinan años (`mapas_climatologia.png`, `mapas_total_comparacion.png`, `*_resumen_*.csv`) las regenera **una sola persona** (coordinación) cuando ya están todos los `.nc`; como los `.nc` están en el repo, basta `git pull` y `python scripts/04_mapas_mensuales.py`, sin volver a descargar nada.
 
+Los resultados de las corridas del otro dominio (`wrfctrl_*`, script `05_wrf_ctrl.py`) son solo de uso local: `.gitignore` los excluye y no se suben.
+
 No usar `git add .` ni `git add figures/` completo: subiría versiones de las figuras combinadas hechas con años incompletos.
 
 ## Reglas del grupo

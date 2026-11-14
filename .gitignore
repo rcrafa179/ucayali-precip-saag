@@ -35,3 +35,8 @@ nohup.out
 # Resultados procesados (pequeños, pocos MB): SÍ van al repo para compartirlos entre el grupo.
 # Los datos crudos (data/raw/) siguen fuera.
 !data/processed/*.nc
+
+# Corridas WRF del otro dominio (WRF2d_CTRL): solo uso local, no van al repo
+WRF2d_CTRL_*.nc
+data/processed/wrfctrl_*
+figures/wrfctrl_*
