@@ -48,7 +48,9 @@ Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 | 2015 | ✅ | ✅ | ✅ | rcrafa179 |
 | Climatología y análisis (combinado) | — | ✅ | ✅ | rcrafa179 |
 
-Pendiente: comparar con PISCO, IMERG y ERA5 (preguntas 1–4).
+| PISCO (imágenes) | — | ⏳ en `figures/pisco/` | — | AllSJ-23 |
+
+Pendiente: subir las figuras de PISCO (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
 
 ## Resultados
 
