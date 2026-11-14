@@ -109,8 +109,10 @@ def pisco(anio):
         if viejo in p.dims:
             ren[viejo] = nuevo
     p = p.rename(ren)
-    p = p.assign_coords(time=_tiempo(ds[[k for k, v in ren.items() if v == "time"][0]])
-                        + pd.Timedelta(days=PISCO_DESFASE_DIAS))
+    fechas = pd.DatetimeIndex(_tiempo(ds[[k for k, v in ren.items() if v == "time"][0]]))
+    if PISCO_DESFASE_DIAS:
+        fechas = fechas + pd.to_timedelta(int(PISCO_DESFASE_DIAS), unit="D")
+    p = p.assign_coords(time=fechas)
     p = p.where((p > -1) & (p < 1e4))                    # quita el missing_value (-3.4e38)
     p = p.transpose("time", "lat", "lon").sortby("lat").sortby("lon")
     p = p.reindex(time=dias(anio))

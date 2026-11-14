@@ -50,9 +50,9 @@ Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 
 | PISCO (imágenes) | — | ⏳ en `figures/pisco/` | — | AllSJ-23 |
 | ERA5 (comparación) | ✅ `era5_pr_diaria_FMA_<año>.nc` | ✅ `era5_comparacion_*` | ✅ | rcrafa179 |
-| PISCO (comparación) | ⏳ `pisco_pr_diaria_FMA_<año>.nc` | ⏳ `pisco_comparacion_*` | ⏳ | — |
+| PISCO (comparación) | ✅ `pisco_pr_diaria_FMA_<año>.nc` | ✅ `pisco_comparacion_*` | ✅ | rcrafa179 |
 
-Pendiente: correr la comparación con PISCO (`02b_descargar_pisco.py` → `03_diario_obs.py pisco` → `08_comparar.py pisco`), subir las figuras de PISCO (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
+Pendiente: subir las figuras de PISCO de AllSJ-23 (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
 
 ## Resultados
 
@@ -140,12 +140,60 @@ ERA5 es el reanálisis que fuerza al WRF-SAAG en los bordes de su dominio contin
 
 Nota: la descarga de ERA5 usada aquí cubre 4.5–5.25°S y 74–73°W (malla de 4×5). La celda de 0.25° del extremo norte no entra, y por eso queda fuera una franja de unos 5 km de la punta norte de la cuenca. Con la versión actual de `02_descargar_era5.py` esa celda ya se incluye.
 
+### 5. Evaluación con PISCO (observaciones)
+
+PISCOp v2.1 (SENAMHI) combina pluviómetros, la climatología de radar y el satélite CHIRP a 0.1°. Es la mejor referencia observacional disponible para Perú, pero en el llano amazónico hay pocas estaciones y depende más del satélite, así que también tiene incertidumbre. En la cuenca, el promedio usa 54 celdas de 0.1° ponderadas por el área que cae dentro (unas 36 celdas completas). Al desplazar PISCO ±1 día, la mejor correlación queda en 0 días: las fechas casan sin corrección, así que `PISCO_DESFASE_DIAS = 0`. Solo en 2015 la correlación es algo mayor desplazando un día, pero los otros años no lo confirman. Números: `figures/pisco_comparacion_resumen.csv`, `..._mensual.csv` y `figures/tres_fuentes_resumen.csv`.
+
+| | 2005 | 2010 | 2015 |
+|---|---|---|---|
+| Acumulado FMA, SAAG / PISCO (mm) | 785 / 705 | 933 / 915 | 840 / **1032** |
+| Sesgo de SAAG respecto a PISCO | +11 % | **+2 %** | **−19 %** |
+| Correlación diaria / con media de 7 días | 0.06 / 0.15 | **0.43 / 0.60** | 0.20 / **0.72** |
+| Días con lluvia ≥ 1 mm, SAAG / PISCO | 64 / 64 | 65 / 69 | 70 / 74 |
+| Días con más de 20 mm, SAAG / PISCO | 15 / 9 | 22 / 14 | 10 / 16 |
+| Percentil 95 diario, SAAG / PISCO (mm) | 38 / 40 | 35 / 46 | 32 / 37 |
+| Día máximo, SAAG / PISCO (mm) | 56 / 60 | 48 / **76** | 43 / 53 |
+
+**Totales:** el acumulado de FMA de SAAG queda **dentro de ±20 %** de PISCO en los tres años: +11 % en 2005, +2 % en 2010 y −19 % en 2015. Pero **el orden de los años no coincide**: PISCO tiene a **2015 como el FMA más lluvioso** (1032 mm), seguido de 2010 y 2005, mientras SAAG tiene a 2010 primero y subestima 2015. Sí coinciden en que 2005 es el más seco. Por meses, los errores son mayores y cambian de signo: abril de 2005 sale +68 %, febrero de 2005 −31 %, y febrero y marzo de 2015 −26 % y −24 %.
+
+![Acumulado mensual SAAG vs PISCO](figures/pisco_comparacion_mensual.png)
+
+**Día a día:** la sincronía depende del año. En 2010 es buena (r = 0.43 diaria, 0.60 semanal): SAAG capta los eventos grandes de inicio de febrero y de abril. En 2015 casi no acierta el día exacto (0.20), pero sí los períodos húmedos y secos de una semana (r = 0.72). En 2005 no hay sincronía (0.06 / 0.15).
+
+![Serie diaria SAAG vs PISCO](figures/pisco_comparacion_serie.png)
+
+**Frecuencia e intensidad: lo mejor del modelo.** SAAG llueve casi la **misma cantidad de días** que PISCO (64–70 frente a 64–74), y su curva de excedencia se superpone con la de PISCO en casi todo el rango. La diferencia está en el extremo. PISCO tiene unos pocos días de lluvia generalizada sobre toda la cuenca más fuertes (máximos de 53–76 mm y percentil 95 de 37–46 mm) que SAAG (43–56 mm y 32–38 mm). SAAG, en cambio, tiene más días de 20–40 mm.
+
+![Dispersión y curva de excedencia SAAG vs PISCO](figures/pisco_comparacion_dispersion.png)
+
+**Distribución espacial:** los patrones dentro de la cuenca no coinciden de forma sistemática entre años. En 2015, PISCO pone el máximo en el **norte y noreste** de la cuenca, más de 1200 mm, justo donde SAAG es más seco (SAAG − PISCO de −250 a −500 mm). En 2005, SAAG es más lluvioso al este y sureste. Con tres años y pocas estaciones en la zona, no se puede hablar todavía de un sesgo espacial fijo del modelo.
+
+![Mapas SAAG vs PISCO](figures/pisco_comparacion_mapas.png)
+
+#### ¿Mejora la convección explícita a ERA5? (pregunta 4)
+
+Frente a PISCO, promediando los tres años (`python scripts/09_tres_fuentes.py`):
+
+| | WRF-SAAG 4 km | ERA5 0.25° | PISCO |
+|---|---|---|---|
+| Error medio del acumulado FMA (valor absoluto) | **11 %** | 16 % | — |
+| Correlación diaria con PISCO | 0.23 | **0.26** | — |
+| Correlación con medias de 7 días | **0.49** | 0.37 | — |
+| Días con lluvia ≥ 1 mm (por año) | **64–70** | 79–86 | 64–74 |
+| Días con más de 20 mm (por año) | 10–22 | 6–7 | 9–16 |
+| Percentil 95 diario (mm) | **32–38** | 22–23 | 37–46 |
+
+- **Sí, en cómo llueve.** SAAG reproduce la frecuencia de días lluviosos y la intensidad de PISCO mucho mejor que ERA5. ERA5 llueve 10–20 días de más y su percentil 95 es apenas la mitad del observado: es el sesgo de "llovizna" de la convección parametrizada.
+- **En los totales, SAAG también está algo más cerca** (11 % de error frente a 16 %), y sigue mejor las variaciones semanales (0.49 frente a 0.37).
+- **En el día exacto, no.** ERA5 asimila observaciones y SAAG es una corrida libre, así que la correlación diaria es parecida y baja en los dos (~0.25).
+- **Ninguno de los dos acierta el orden de los años:** según PISCO, 2015 fue el más lluvioso.
+
 ### Conclusiones preliminares y cautelas
 
-1. En la Intercuenca 49911, el WRF-SAAG simula unos **780–930 mm entre febrero y abril**, con **marzo como mes más lluvioso** y un gradiente de **menos lluvia al oeste y más al norte y al este**.
-2. Las diferencias entre años son moderadas en el total (±9 %), pero grandes en el reparto mensual (febrero) y en cómo se concentra la lluvia (2005 frente a 2015).
-3. **Frente a ERA5**, el acumulado de FMA es parecido (−4 %, +20 %, −3 %), pero SAAG llueve **menos días y con más intensidad**, y muestra una **estructura espacial** dentro de la cuenca que ERA5 no tiene. La sincronía día a día es baja, como se espera de una simulación libre de convección explícita.
-4. **Falta la evaluación con observaciones.** Sin PISCO (o IMERG) no se puede decir cuál de los dos se acerca más a la realidad en totales, gradientes o extremos. Es el siguiente paso.
+1. En la Intercuenca 49911, el WRF-SAAG simula unos **780–930 mm entre febrero y abril**, con **marzo como mes más lluvioso**. PISCO observa 700–1030 mm.
+2. **Frente a PISCO**, el acumulado de FMA del modelo queda dentro de ±20 % (+11 %, +2 %, −19 %), y la **frecuencia de días lluviosos y la distribución de intensidades son muy parecidas**. Fallan el orden de los años (subestima 2015, que según PISCO fue el más lluvioso), algunos meses (errores de hasta ±30–70 %) y los pocos días de lluvia generalizada más intensos.
+3. **Frente a ERA5**, la convección explícita a 4 km mejora claramente la forma de la lluvia (menos días, más intensos, como en PISCO) y algo los totales y la variabilidad semanal. No mejora la sincronía día a día, que es baja en ambos porque el modelo es una corrida libre.
+4. **El patrón espacial dentro de la cuenca no se valida todavía**: SAAG y PISCO ponen los máximos en lugares distintos según el año, y PISCO tiene pocas estaciones en la zona. Sumar IMERG ayudaría a decidir.
 5. **Tres años no son una climatología.** Lo que aquí se llama "climatología" es el promedio de 2005, 2010 y 2015, útil solo como referencia para comparar esos años entre sí.
 6. Los máximos aislados de una sola celda (más de 150 mm/día) deben tomarse con cuidado: a 4 km una tormenta puede caer en un punto en el modelo y unos km más allá en la realidad.
 
@@ -191,6 +239,7 @@ Todos los comandos se corren **desde la raíz del repo**.
 | `06_subir_anio.py` | Sube al repo los resultados de un año, siempre de la misma forma |
 | `07_analisis.py` | Serie diaria, anomalías, intensidad y extremos de todos los años (sección Resultados) |
 | `08_comparar.py` | Compara SAAG con ERA5 o PISCO sobre la cuenca: totales, sesgo, correlación, extremos, mapas y chequeo de fechas |
+| `09_tres_fuentes.py` | SAAG y ERA5 frente a PISCO en una sola tabla (pregunta 4) |
 
 ### 1. Extraer SAAG
 

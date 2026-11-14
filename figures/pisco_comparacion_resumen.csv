@@ -1,0 +1,4 @@
+anio,dias,saag_FMA_mm,pisco_FMA_mm,sesgo_mm,sesgo_pct,r_diaria,rmse_diaria_mm,r_7dias,r_ref_1dia_antes,r_ref_1dia_despues,dias_lluvia_saag,dias_lluvia_pisco,dias_20mm_saag,dias_20mm_pisco,p95_saag,p95_pisco,max_saag,max_pisco
+2005,89,784.73,704.86,79.87,11.33,0.06,16.39,0.15,-0.02,-0.08,64,64,15,9,37.6,40.1,55.54,59.64
+2010,89,933.19,914.82,18.37,2.01,0.43,15.71,0.6,0.15,0.19,65,69,22,14,34.89,45.68,48.23,75.72
+2015,89,839.79,1032.12,-192.33,-18.63,0.2,13.89,0.72,0.03,0.35,70,74,10,16,31.89,36.53,43.35,52.64
