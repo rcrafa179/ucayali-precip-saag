@@ -66,6 +66,7 @@ Todo está en `figures/` (tablas `.csv` que se abren en Excel) y `data/processed
 |---|---|
 | `saag_diaria_cuenca_<año>.csv` | **Lluvia diaria de SAAG** en la cuenca, un día por fila: media, mediana, mínimo y máximo entre celdas (mm), % de la cuenca con lluvia ≥ 1 mm y si el día está completo |
 | `pisco_diaria_cuenca_<año>.csv` | Lo mismo para PISCO |
+| `saag_estaciones_mensual.csv` | SAAG en la celda de 4 km más cercana a Genaro Herrera (−4.906, −73.650) y Bagazán (−4.910, −73.604), y media 3×3: lluvia mensual y días con lluvia, para comparar con las estaciones y PISCO v3 |
 | `tres_fuentes_diaria.csv` | Lluvia diaria media de la cuenca de **SAAG, ERA5 y PISCO**, lado a lado (267 días) |
 | `mapas_resumen_mensual_<año>.csv`, `..._todos.csv` | Acumulado mensual de SAAG (media, mín. y máx. de la cuenca) y días con lluvia; con prefijo `pisco_`, lo mismo para PISCO |
 | `analisis_resumen_FMA.csv` | Resumen de FMA por año de SAAG: totales, intensidad, extremos y concentración; con prefijo `pisco_`, lo mismo para PISCO |
