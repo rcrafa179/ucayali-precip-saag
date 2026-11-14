@@ -1,25 +1,30 @@
-# Evaluación de la precipitación horaria simulada con WRF a escala convectiva (4 km) en la cuenca del Ucayali: 2005, 2010 y 2015
+# Evaluación de la precipitación diaria simulada con WRF a escala convectiva (4 km) en la cuenca del Ucayali: febrero–abril de 2005, 2010 y 2015
 
 Proyecto del **Taller de Hidroclima y simulaciones de convección explícita en Sudamérica tropical**.
 
 ## Objetivo
 
-Caracterizar y evaluar la precipitación horaria de la simulación **WRF-SAAG (NCAR, 4 km, convección explícita)** en la cuenca del Ucayali para 2005 y 2010 (sequías amazónicas) y 2015 (El Niño), comparándola con IMERG, PISCO y ERA5.
+Caracterizar y evaluar la **precipitación diaria acumulada** de la simulación **WRF-SAAG (NCAR, 4 km, convección explícita)** en la cuenca del Ucayali durante **FMA (febrero–abril)** de 2005, 2010 y 2015, comparándola con PISCO, IMERG y ERA5.
+
+FMA es el final de la estación lluviosa. 2005 y 2010 fueron años de sequía amazónica y 2015 de El Niño.
 
 Preguntas guía:
-1. ¿Qué tan bien reproduce el WRF a 4 km el acumulado, la estacionalidad y el **ciclo diurno** de la lluvia?
-2. ¿Dónde falla más, en la vertiente andina o en el llano amazónico?
-3. ¿Mejora respecto a ERA5, que es su forzante?
-4. ¿Captura las anomalías de 2005, 2010 y 2015?
+1. ¿Qué tan bien reproduce el WRF a 4 km el acumulado de FMA y su distribución espacial?
+2. ¿Representa bien la frecuencia de días lluviosos y la intensidad diaria, incluidos los extremos?
+3. ¿Dónde falla más, en la vertiente andina o en el llano amazónico?
+4. ¿Mejora respecto a ERA5, que es su forzante?
+5. ¿Distingue las diferencias entre 2005, 2010 y 2015?
 
 ## Datos
 
 | Base | Uso | Resolución | Acceso |
 |---|---|---|---|
-| **WRF-SAAG** (GDEX d616000) | Modelo evaluado | 4 km, horaria | OPeNDAP, sin cuenta |
-| **GPM IMERG V07** (GPM_3IMERGHH) | Referencia horaria | 0.1°, 30 min | NASA Earthdata |
-| **PISCO-prec** (SENAMHI) | Referencia diaria en los Andes | 0.1°, diaria | Libre |
-| **ERA5** | Forzante / contraste | 0.25°, horaria | Copernicus CDS |
+| **WRF-SAAG** (GDEX d616000) | Modelo evaluado | 4 km, horaria → diaria | OPeNDAP, sin cuenta |
+| **PISCO-prec** (SENAMHI) | Referencia principal (Andes peruanos) | 0.1°, diaria | Libre |
+| **GPM IMERG V07** (GPM_3IMERGHH) | Referencia satelital | 0.1°, 30 min → diaria | NASA Earthdata |
+| **ERA5** | Forzante / contraste | 0.25°, horaria → diaria | Copernicus CDS |
+
+**Día pluviométrico:** todos los productos se acumulan con la misma ventana, definida en `scripts/config.py` (`DIA_INICIO_UTC`). Por defecto es 12 UTC (07:00 a 07:00 hora local), la convención de las estaciones de SENAMHI, para comparar con PISCO.
 
 Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 
@@ -53,10 +58,16 @@ mamba install -c conda-forge xesmf regionmask
 Todos los comandos se corren **desde la raíz del repo**.
 
 ```bash
-python scripts/01_extraer_saag.py prueba     # verificar acceso y variable
-python scripts/01_extraer_saag.py 2005       # extraer un año (reanudable)
-python scripts/02_descargar_era5.py 2005
+python scripts/01_extraer_saag.py prueba          # verifica acceso y mide velocidad con un día
+python scripts/01_extraer_saag.py 2005            # FMA 2005 diario (~3–4 h, reanudable por mes)
+python scripts/02_descargar_era5.py 2005          # ERA5 horario de FMA
+python scripts/03_diario_obs.py era5 2005         # ERA5 a diario
+python scripts/03_diario_obs.py imerg 2005        # IMERG a diario
 ```
+
+Salidas diarias en `data/processed/`: `saag_pr_diaria_FMA_<año>.nc`, `era5_...`, `imerg_...`.
+Cada archivo incluye un contador de pasos válidos por día (`n_horas` / `n_pasos`) para detectar días incompletos.
+
 
 Plan completo y reparto de tareas: [`docs/plan.md`](docs/plan.md).
 
@@ -66,8 +77,8 @@ Plan completo y reparto de tareas: [`docs/plan.md`](docs/plan.md).
 - **No subir credenciales** (`.cdsapirc`, `.netrc`).
 - Cada tarea en su propia rama: `git checkout -b nombre/tarea`. Se integra a `main` con Pull Request.
 - Antes de hacer commit de un notebook, limpien las salidas pesadas o usen `nbstripout`.
-- Los parámetros comunes (caja, años, rutas) solo se cambian en `scripts/config.py`.
-- Tiempo: los datos crudos están en **UTC**. Para el ciclo diurno se convierte a hora local (UTC−5).
+- Los parámetros comunes (caja, años, meses, día pluviométrico, rutas) solo se cambian en `scripts/config.py`.
+- Tiempo: los datos crudos están en **UTC**. La fecha de cada día diario es la del inicio de la ventana.
 
 ## Cita del dataset principal
 
