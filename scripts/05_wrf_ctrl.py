@@ -129,7 +129,7 @@ def figuras(res):
             m = (x >= lo) & (x < hi)
             if m.sum():
                 filas2.append(dict(banda=nom, anio=a, total_FMA_mm_mediana=np.median(y[m]), total_FMA_mm_media=y[m].mean()))
-    ax.set_xlabel("Altura del terreno (m)"); ax.set_ylabel("Lluvia acumulada FMA (mm), mediana por tramo de 250 m")
+    ax.set_xlabel("Altura del terreno (m)"); ax.set_ylabel("Lluvia FMA (mm)\nmediana por tramo de 250 m")
     ax.grid(alpha=0.3, lw=0.5); ax.legend(frameon=False)
     ax.set_title("Precipitación FMA vs altura — WRF-SAAG 4 km", fontsize=11)
     fig.savefig(FIGURAS / "wrfctrl_lluvia_vs_altura.png", dpi=150, bbox_inches="tight"); plt.close(fig)

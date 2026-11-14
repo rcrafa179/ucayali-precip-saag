@@ -153,6 +153,10 @@ def figura(ds, campos, mask, geom, titulo, etiqueta, archivo, subt=None):
     n = len(campos)
     vals = np.concatenate([np.where(mask, c, np.nan).ravel() for c in campos.values()])
     vmin, vmax = np.nanmin(vals), np.nanmax(vals)
+    extend = "neither"
+    p99 = np.nanpercentile(vals, 99)
+    if vmax > 1.5 * p99:          # pocos máximos extremos (p. ej. vertiente andina): saturar en el p99
+        vmax, extend = p99, "max"
     fig, axs = plt.subplots(1, n, figsize=(4.6 * n + 0.8, 5.6), sharey=True, squeeze=False)
     axs = axs[0]
     for ax, (m, c) in zip(axs, campos.items()):
@@ -172,9 +176,10 @@ def figura(ds, campos, mask, geom, titulo, etiqueta, archivo, subt=None):
         ax.set_aspect("equal")
         ax.set_xlim(float(ds.XLONG.min()), float(ds.XLONG.max()))
         ax.set_ylim(float(ds.XLAT.min()), float(ds.XLAT.max()))
-    cb = fig.colorbar(h, ax=list(axs), orientation="horizontal", fraction=0.05, pad=0.1, shrink=0.75)
+    cb = fig.colorbar(h, ax=list(axs), orientation="horizontal", fraction=0.05, pad=0.1, shrink=0.75,
+                      extend=extend)
     cb.set_label(etiqueta)
-    fig.suptitle(titulo, fontsize=14)
+    fig.suptitle(titulo, fontsize=14, y=1.04)
     FIGURAS.mkdir(parents=True, exist_ok=True)
     archivo = pref(archivo)
     fig.savefig(FIGURAS / archivo, dpi=150, bbox_inches="tight")
