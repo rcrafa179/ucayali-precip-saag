@@ -59,7 +59,7 @@ Todos los comandos se corren **desde la raíz del repo**.
 
 ```bash
 python scripts/01_extraer_saag.py prueba          # verifica acceso y mide velocidad con un día
-python scripts/01_extraer_saag.py 2005            # FMA 2005 diario (~3–4 h, reanudable por mes)
+python scripts/01_extraer_saag.py 2005            # FMA 2005 diario (reanudable por mes)
 python scripts/02_descargar_era5.py 2005          # ERA5 horario de FMA
 python scripts/03_diario_obs.py era5 2005         # ERA5 a diario
 python scripts/03_diario_obs.py imerg 2005        # IMERG a diario

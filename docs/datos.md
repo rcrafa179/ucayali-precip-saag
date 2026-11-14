@@ -1,6 +1,6 @@
 # Descarga de datos
 
-Caja común: **3.2°S–15.8°S, 77.8°W–69.8°W** (ver `scripts/config.py`). Periodo: **FMA (1 feb – 30 abr) de 2005, 2010 y 2015**, en **valores diarios**.
+Dominio común: **5.3°S–4.4°S, 74.0°W–73.1°W** (Ucayali bajo, entre Requena y Nauta; ver `scripts/config.py`). Periodo: **FMA (1 feb – 30 abr) de 2005, 2010 y 2015**, en **valores diarios**.
 
 ## Día pluviométrico (importante)
 Todos los productos se acumulan con la misma ventana, `DIA_INICIO_UTC` en `config.py`:
@@ -18,9 +18,10 @@ Por eso para FMA se necesitan datos horarios **desde el 1 de febrero 12 UTC hast
 - **Precipitación: `PREC_ACC_NC` [mm], acumulada cada 60 min (`PREC_ACC_DT = 60`)**, así que ya es horaria. El valor a las HH:00 UTC es la lluvia entre HH−1 y HH.
 - Sin parametrización de cúmulos (`CU_PHYSICS = 0`): `PREC_ACC_NC` es la precipitación total. `SNOW_ACC_NC` y `GRAUPEL_ACC_NC` son fracciones de esa misma precipitación.
 - Configuración del modelo (atributos del archivo): WRF V4.1.5, dx = 4 km, Lambert (TRUELAT −5/−40, STAND_LON −58), microfísica Thompson (8), PBL YSU (1), radiación RRTMG (4), superficie Noah-MP (4), dt = 20 s.
-- Malla 1471 × 2027, fila 0 = extremo sur. Caja del Ucayali: `y[1144:1509]`, `x[182:433]` (365 × 251 puntos).
+- Malla 1471 × 2027, fila 0 = extremo sur. Dominio: `y[1439:1467]`, `x[292:319]` (28 × 27 puntos de 4 km).
+- Si cambian la caja en `config.py`, el script recalcula sola la malla (`malla_ucayali.nc`).
 - Variables útiles para el análisis: `REFL_COM` (reflectividad compuesta), `AFWA_CAPE_MU`, `AFWA_PWAT`, `OLR` (para comparar con satélite) y `W_UP_MAX`.
-- El SAAG **no tiene salida diaria**: el script lee las 24 horas de cada día (solo `PREC_ACC_NC`, solo la caja) y las suma. FMA son 89 días = 2136 horas por año, unas 3–4 h a ~6 s por hora.
+- El SAAG **no tiene salida diaria**: el script lee las 24 horas de cada día (solo `PREC_ACC_NC`, solo la caja) y las suma. FMA son 89 días = 2136 horas por año.
 - Script: `python scripts/01_extraer_saag.py prueba` (un día), luego `... 2005`, etc.
 - Salida: `data/raw/saag/<año>/saag_pr_diaria_<YYYYMM>.nc` (checkpoint mensual) y `data/processed/saag_pr_diaria_FMA_<año>.nc`. Variables `pr` [mm/día] y `n_horas` (24 = día completo).
 
@@ -35,7 +36,7 @@ Por eso para FMA se necesitan datos horarios **desde el 1 de febrero 12 UTC hast
 1. Cuenta en https://urs.earthdata.nasa.gov y autorizar la app **NASA GESDISC DATA ARCHIVE**.
 2. En https://disc.gsfc.nasa.gov buscar **GPM_3IMERGHH**, abrir **Subset / Get Data** y configurar:
    - fechas: **del 1 de febrero 12:00 UTC al 1 de mayo 12:00 UTC** de cada año;
-   - caja: la caja común;
+   - caja: el dominio común (N −4.4, S −5.3, O −74.0, E −73.1);
    - variable: `precipitation`;
    - formato: netCDF.
 3. Descargar la lista de enlaces y bajarla con:

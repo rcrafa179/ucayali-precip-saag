@@ -18,7 +18,7 @@ Salida:
 
 Verificado con wrf2d_d01_2015-01-10_120000.nc:
   - PREC_ACC_NC [mm], PREC_ACC_DT = 60 min -> lluvia de la hora previa. CU_PHYSICS = 0.
-  - Malla 1471 x 2027, fila 0 = sur. Caja Ucayali = y[1144:1509] x[182:433] (365 x 251).
+  - Malla 1471 x 2027, fila 0 = sur. Dominio actual (5.3-4.4°S, 74.0-73.1°W) = y[1439:1467] x[292:319] (28 x 27).
   - Archivos: hist2D/<YYYYMM>/wrf2d_d01_<YYYY-MM-DD>_<HHMMSS>.nc
 """
 import sys, time
@@ -44,9 +44,12 @@ WORKERS = 6   # peticiones simultáneas; no subir de ~12 para no saturar el serv
 def indices_caja():
     """Calcula (y0,y1,x0,x1) de la caja a partir de XLAT/XLONG y guarda la malla."""
     f = SALIDA / "malla_ucayali.nc"
+    caja = f"{LAT_MIN},{LAT_MAX},{LON_MIN},{LON_MAX}"
     if f.exists():
-        m = xr.open_dataset(f)
-        return tuple(int(m.attrs[k]) for k in ("y0", "y1", "x0", "x1"))
+        with xr.open_dataset(f) as m:
+            if m.attrs.get("caja") == caja:
+                return tuple(int(m.attrs[k]) for k in ("y0", "y1", "x0", "x1"))
+        print("La caja de config.py cambió: se recalcula la malla.")
     print("Leyendo constantes del modelo...")
     c = xr.open_dataset(URL_CONST)
     lat = c["XLAT"].squeeze().values
@@ -57,7 +60,7 @@ def indices_caja():
     ydim, xdim = c["XLAT"].squeeze().dims
     sub = c[[v for v in ["XLAT", "XLONG", "HGT", "LANDMASK"] if v in c]].squeeze()
     sub = sub.isel({ydim: slice(y0, y1), xdim: slice(x0, x1)}).load()
-    sub.attrs.update(y0=int(y0), y1=int(y1), x0=int(x0), x1=int(x1))
+    sub.attrs.update(y0=int(y0), y1=int(y1), x0=int(x0), x1=int(x1), caja=caja)
     SALIDA.mkdir(parents=True, exist_ok=True)
     sub.encoding.pop("unlimited_dims", None)
     sub.to_netcdf(f)

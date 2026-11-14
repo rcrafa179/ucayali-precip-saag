@@ -9,9 +9,9 @@ ANIOS = [2005, 2010, 2015]
 MESES = [2, 3, 4]            # FMA: febrero, marzo, abril
 PERIODO = "FMA"
 
-# Caja del Ucayali con margen (grados)
-LAT_MIN, LAT_MAX = -15.8, -3.2
-LON_MIN, LON_MAX = -77.8, -69.8
+# Dominio de trabajo (grados): Ucayali bajo, entre Requena y la confluencia con el Marañón (Nauta)
+LAT_MIN, LAT_MAX = -5.3, -4.4
+LON_MIN, LON_MAX = -74.0, -73.1
 AREA_CDS = [LAT_MAX, LON_MIN, LAT_MIN, LON_MAX]  # N, O, S, E (formato Copernicus)
 
 # ---------------- Día pluviométrico ----------------

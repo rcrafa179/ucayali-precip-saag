@@ -8,17 +8,17 @@ Marcar con `[x]` al terminar. Responsable entre corchetes.
 - [ ] Reparto por año: 2005 [ ] · 2010 [ ] · 2015 [ ]
 
 ## 1. Cuenca
-- [ ] Descargar el límite del Ucayali (ANA o HydroBASINS) a `data/aux/` [ ]
-- [ ] Verificar que la caja de `config.py` cubre toda la cuenca [ ]
+- [x] Dominio fijado: 5.3–4.4°S, 74.0–73.1°W (Ucayali bajo, Requena–Nauta) [Rafael]
+- [ ] Opcional: límite de la cuenca o del cauce en `data/aux/` para los mapas [ ]
 
 ## 2. Prueba piloto del SAAG
 - [x] Ruta de archivos en THREDDS: `hist2D/<YYYYMM>/` [Rafael]
-- [x] Variable = `PREC_ACC_NC` · mm · acumulación de 60 min · caja = 365 × 251 puntos [Rafael]
+- [x] Variable = `PREC_ACC_NC` · mm · acumulación de 60 min · dominio = 28 × 27 puntos [Rafael]
 - [x] Lectura recortada por OPeNDAP: ~2–6 s por hora [Rafael]
 - [ ] Confirmar la convención de fecha de PISCO y fijar `DIA_INICIO_UTC` en `config.py` [ ]
 - [ ] `python scripts/01_extraer_saag.py prueba` (un día completo) [ ]
 
-## 3. Extracción del SAAG, diario FMA (~3–4 h por año)
+## 3. Extracción del SAAG, diario FMA
 - [ ] 2005 [ ]
 - [ ] 2010 [ ]
 - [ ] 2015 [ ]
