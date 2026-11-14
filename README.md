@@ -6,7 +6,7 @@ Proyecto del **Taller de Hidroclima y simulaciones de convección explícita en 
 
 Caracterizar y evaluar la **precipitación diaria acumulada** de la simulación **WRF-SAAG (NCAR, 4 km, convección explícita)** en el bajo Ucayali durante **FMA (febrero–abril)** de 2005, 2010 y 2015, comparándola con PISCO, IMERG y ERA5.
 
-FMA es el final de la estación lluviosa. 2005 y 2010 fueron años de sequía amazónica y 2015 de El Niño.
+FMA es el final de la estación lluviosa. 2005 y 2010 fueron años de sequía amazónica [12–15] y 2015 de El Niño [16, 17]. La simulación evaluada se describe en [1, 2] y la referencia observacional en [7].
 
 Preguntas guía:
 1. ¿Qué tan bien reproduce el WRF a 4 km el acumulado de FMA y su distribución espacial?
@@ -109,7 +109,7 @@ Mapas de cada año: [2005](figures/mapas_total_2005.png), [2010](figures/mapas_t
 - **2010 es el FMA más lluvioso (+9 %)**, sobre todo por un febrero muy húmedo (373 mm, más del doble que en 2005). El exceso se concentra en el norte de la cuenca, donde pasa del +30 %.
 - **2005 es el más seco (−8 %)**, con déficit en casi toda la cuenca y más marcado en el este. Su febrero fue el más seco de los tres, aunque abril fue el más lluvioso.
 - **2015 queda en el promedio (−1 %)**, pero con un dipolo: el norte está seco (−20 a −30 %) y el centro-sur es más húmedo.
-- **Las sequías amazónicas de 2005 y 2010 no se ven en FMA.** Esas sequías fueron sobre todo de la estación seca (julio a octubre), y en febrero–abril 2010 es justamente el año más lluvioso. Para la sequía habría que mirar otros meses, y para El Niño 2015 su desarrollo posterior.
+- **Las sequías amazónicas de 2005 y 2010 no se ven en FMA.** Esas sequías fueron sobre todo de la estación seca (julio a octubre) [12–15], y en febrero–abril 2010 es justamente el año más lluvioso. Para la sequía habría que mirar otros meses, y para El Niño 2015 su desarrollo posterior.
 
 ### 3. Variabilidad diaria, intensidad y extremos
 
@@ -147,7 +147,7 @@ ERA5 es el reanálisis que fuerza al WRF-SAAG en los bordes de su dominio contin
 
 ![Serie diaria SAAG vs ERA5](figures/era5_comparacion_serie.png)
 
-**La diferencia más clara es cómo llueve.** ERA5 llueve casi todos los días (79–86 de 89), pero suave: su percentil 95 es de unos 22 mm/día y solo tiene 6–7 días de más de 20 mm. SAAG tiene más días secos (64–70 con lluvia), pero sus eventos son más intensos: percentil 95 de 32–38 mm/día y entre 10 y 22 días de más de 20 mm. En la curva de excedencia, SAAG supera a ERA5 en el 30 % de días más lluviosos y queda por debajo en el resto. Es el contraste típico entre la convección parametrizada (lluvia demasiado frecuente y débil) y la convección resuelta (más intermitente e intensa).
+**La diferencia más clara es cómo llueve.** ERA5 llueve casi todos los días (79–86 de 89), pero suave: su percentil 95 es de unos 22 mm/día y solo tiene 6–7 días de más de 20 mm. SAAG tiene más días secos (64–70 con lluvia), pero sus eventos son más intensos: percentil 95 de 32–38 mm/día y entre 10 y 22 días de más de 20 mm. En la curva de excedencia, SAAG supera a ERA5 en el 30 % de días más lluviosos y queda por debajo en el resto. Es el contraste típico entre la convección parametrizada (lluvia demasiado frecuente y débil) y la convección resuelta (más intermitente e intensa) [11].
 
 ![Dispersión y curva de excedencia](figures/era5_comparacion_dispersion.png)
 
@@ -159,7 +159,7 @@ Nota: la descarga de ERA5 usada aquí cubre 4.5–5.25°S y 74–73°W (malla de
 
 ### 5. Evaluación con PISCO (observaciones)
 
-PISCOp v2.1 (SENAMHI) combina pluviómetros, la climatología de radar y el satélite CHIRP a 0.1°. Es la mejor referencia observacional disponible para Perú, pero en el llano amazónico hay pocas estaciones y depende más del satélite, así que también tiene incertidumbre. En la cuenca, el promedio usa 54 celdas de 0.1° ponderadas por el área que cae dentro (unas 36 celdas completas). Al desplazar PISCO ±1 día, la mejor correlación queda en 0 días: las fechas casan sin corrección, así que `PISCO_DESFASE_DIAS = 0`. Solo en 2015 la correlación es algo mayor desplazando un día, pero los otros años no lo confirman. Números: `figures/pisco_comparacion_resumen.csv`, `..._mensual.csv` y `figures/tres_fuentes_resumen.csv`.
+PISCOp v2.1 (SENAMHI) combina pluviómetros, la climatología de radar y el satélite CHIRP a 0.1° [7]. Es la mejor referencia observacional disponible para Perú, pero en el llano amazónico hay pocas estaciones y depende más del satélite, así que también tiene incertidumbre. En la cuenca, el promedio usa 54 celdas de 0.1° ponderadas por el área que cae dentro (unas 36 celdas completas). Al desplazar PISCO ±1 día, la mejor correlación queda en 0 días: las fechas casan sin corrección, así que `PISCO_DESFASE_DIAS = 0`. Solo en 2015 la correlación es algo mayor desplazando un día, pero los otros años no lo confirman. Números: `figures/pisco_comparacion_resumen.csv`, `..._mensual.csv` y `figures/tres_fuentes_resumen.csv`.
 
 | | 2005 | 2010 | 2015 |
 |---|---|---|---|
@@ -433,6 +433,33 @@ Como los `.nc` están en el repo, esto no requiere volver a descargar nada.
 - Antes de hacer commit de un notebook, limpien las salidas pesadas o usen `nbstripout`.
 - Los datos crudos están en **UTC**.
 
-## Cita del dataset principal
+## Referencias
 
-Rasmussen, R., Liu, C., Ikeda, K., Dominguez, F. (2022). *Multi-decadal Convection-permitting Simulation of Current Climate over South America using WRF*. NSF NCAR. https://doi.org/10.5065/6XQW-ZB02
+**Datos**
+
+1. Rasmussen, R., Liu, C., Ikeda, K., Dominguez, F. (2022). *Multi-decadal Convection-permitting Simulation of Current Climate over South America using WRF* [dataset d616000]. NSF NCAR Geoscience Data Exchange. https://doi.org/10.5065/6XQW-ZB02
+2. Dominguez, F., Rasmussen, R., Liu, C., Ikeda, K., Prein, A., et al. (2024). Advancing South American water and climate science through multidecadal convection-permitting modeling. *Bulletin of the American Meteorological Society*, 105(1), E32–E44. https://doi.org/10.1175/BAMS-D-22-0226.1
+3. Hersbach, H., Bell, B., Berrisford, P., et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999–2049. https://doi.org/10.1002/qj.3803
+4. Hersbach, H., Bell, B., Berrisford, P., et al. (2023). *ERA5 hourly data on single levels from 1940 to present* [dataset]. Copernicus Climate Change Service (C3S) Climate Data Store. https://doi.org/10.24381/cds.adbb2d47
+5. Huffman, G. J., Stocker, E. F., Bolvin, D. T., Nelkin, E. J., Tan, J. (2023). *GPM IMERG Final Precipitation L3 Half Hourly 0.1° × 0.1° V07* (GPM_3IMERGHH) [dataset]. NASA GES DISC. https://doi.org/10.5067/GPM/IMERG/3B-HH/07 (solo si se usa IMERG)
+6. Autoridad Nacional del Agua (ANA). Delimitación y codificación de unidades hidrográficas del Perú (método Pfafstetter): Intercuenca 49911, Bajo Ucayali [shapefile `cuenca/49911.shp`].
+7. Aybar, C., Fernández, C., Huerta, A., Lavado, W., Vega, F., Felipe-Obando, O. (2020). Construction of a high-resolution gridded rainfall dataset for Peru from 1981 to the present day. *Hydrological Sciences Journal*, 65(5), 770–785. https://doi.org/10.1080/02626667.2019.1649411
+8. SENAMHI. PISCOp v2.1 *stable daily* (1981–2016), distribuido por la IRI Data Library, Columbia University. https://iridl.ldeo.columbia.edu/SOURCES/.SENAMHI/.HSR/.PISCO/.Prec/.v2p1/
+
+**Modelo y configuración del WRF-SAAG**
+
+9. Skamarock, W. C., Klemp, J. B., Dudhia, J., Gill, D. O., Liu, Z., Berner, J., Wang, W., Powers, J. G., Duda, M. G., Barker, D. M., Huang, X.-Y. (2019). *A Description of the Advanced Research WRF Model Version 4*. NCAR Tech. Note NCAR/TN-556+STR. https://doi.org/10.5065/1dfh-6p97
+10. Esquemas físicos usados por el SAAG: microfísica de Thompson (Thompson et al., 2008, *Mon. Wea. Rev.*, 136, 5095–5115, https://doi.org/10.1175/2008MWR2387.1); capa límite YSU (Hong et al., 2006, *Mon. Wea. Rev.*, 134, 2318–2341, https://doi.org/10.1175/MWR3199.1); radiación RRTMG (Iacono et al., 2008, *J. Geophys. Res.*, 113, D13103, https://doi.org/10.1029/2008JD009944); suelo Noah-MP (Niu et al., 2011, *J. Geophys. Res.*, 116, D12109, https://doi.org/10.1029/2010JD015139).
+
+**Convección explícita**
+
+11. Prein, A. F., Langhans, W., Fosser, G., et al. (2015). A review on regional convection-permitting climate modeling: Demonstrations, prospects, and challenges. *Reviews of Geophysics*, 53(2), 323–361. https://doi.org/10.1002/2014RG000475
+
+**Contexto de los años estudiados**
+
+12. Marengo, J. A., Nobre, C. A., Tomasella, J., Oyama, M. D., et al. (2008). The drought of Amazonia in 2005. *Journal of Climate*, 21(3), 495–516. https://doi.org/10.1175/2007JCLI1600.1
+13. Lewis, S. L., Brando, P. M., Phillips, O. L., van der Heijden, G. M. F., Nepstad, D. (2011). The 2010 Amazon drought. *Science*, 331(6017), 554. https://doi.org/10.1126/science.1200807
+14. Marengo, J. A., Tomasella, J., Alves, L. M., Soares, W. R., Rodriguez, D. A. (2011). The drought of 2010 in the context of historical droughts in the Amazon region. *Geophysical Research Letters*, 38, L12703. https://doi.org/10.1029/2011GL047436
+15. Espinoza, J. C., Ronchail, J., Guyot, J. L., et al. (2011). Climate variability and extreme drought in the upper Solimões River (western Amazon Basin): Understanding the exceptional 2010 drought. *Geophysical Research Letters*, 38, L13406. https://doi.org/10.1029/2011GL047862
+16. Jiménez-Muñoz, J. C., Mattar, C., Barichivich, J., et al. (2016). Record-breaking warming and extreme drought in the Amazon rainforest during the course of El Niño 2015–2016. *Scientific Reports*, 6, 33130. https://doi.org/10.1038/srep33130
+17. Panisset, J. S., Libonati, R., Gouveia, C. M. P., et al. (2018). Contrasting patterns of the extreme drought episodes of 2005, 2010 and 2015 in the Amazon Basin. *International Journal of Climatology*, 38(2), 1096–1104. https://doi.org/10.1002/joc.5224
