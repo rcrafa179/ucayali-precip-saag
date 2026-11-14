@@ -58,9 +58,12 @@ def procesar(carpeta, anio):
     pr = ds.PREC_ACC_NC.reindex(Time=horas).values.astype("float32")          # faltantes -> NaN
     ny, nx = pr.shape[1:]
     pr_h = pr.reshape(len(fechas), 24, ny, nx)
-    n_horas = np.isfinite(pr_h).all(axis=(2, 3)).sum(axis=1).astype("int8")
+    valida = np.isfinite(pr).any(axis=0)          # los archivos traen una máscara (celdas siempre NaN)
+    n_horas = np.isfinite(pr_h[..., valida]).all(axis=2).sum(axis=1).astype("int8")
+    print(f"  celdas con datos: {int(valida.sum())} de {valida.size}")
     diaria = np.nansum(pr_h, axis=1)
     diaria[n_horas == 0] = np.nan
+    diaria[:, ~valida] = np.nan
     coords = {"XLAT": (("south_north", "west_east"), ds.XLAT.values),
               "XLONG": (("south_north", "west_east"), ds.XLONG.values)}
     out = xr.Dataset(
@@ -77,7 +80,9 @@ def procesar(carpeta, anio):
     print(f"  {f.name}: {len(fechas)} días, incompletos {int((n_horas < 24).sum())}")
 
     hora_utc = (horas - pd.Timedelta(minutes=30)).hour          # hora de inicio del intervalo
-    ciclo = np.stack([np.nanmean(pr[hora_utc == h], axis=0) for h in range(24)])
+    with np.errstate(invalid="ignore"):
+        import warnings; warnings.simplefilter("ignore", RuntimeWarning)
+        ciclo = np.stack([np.nanmean(pr[hora_utc == h], axis=0) for h in range(24)])
     cd = xr.Dataset({"pr": (("hora_utc", "south_north", "west_east"), ciclo, {"units": "mm/h"})},
                     coords={"hora_utc": np.arange(24), **coords},
                     attrs={"nota": "hora_utc = inicio del intervalo de 1 h (lluvia entre h y h+1 UTC)"})
@@ -87,7 +92,7 @@ def procesar(carpeta, anio):
 
 def figuras(res):
     hgt = next(iter(res.values()))[0].HGT.values
-    tierra = next(iter(res.values()))[0].LANDMASK.values > 0.5
+    tierra = (next(iter(res.values()))[0].LANDMASK.values > 0.5) & np.isfinite(next(iter(res.values()))[1]).all(axis=0)
     anios = list(res)
     # ciclo diurno por banda de altura, promedio de los años
     ciclo = np.mean([c for _, c in res.values()], axis=0)
@@ -115,7 +120,7 @@ def figuras(res):
     fig, ax = plt.subplots(figsize=(8, 4.6))
     tramos = np.arange(0, hgt[tierra].max() + 250, 250)
     for (a, (ds, _)), col in zip(res.items(), ["#4292c6", "#e6550d", "#31a354"]):
-        tot = ds.pr.where(ds.n_horas == 24).sum("time").values
+        tot = ds.pr.where(ds.n_horas == 24).sum("time", min_count=1).values
         x, y = hgt[tierra], tot[tierra]
         k = np.digitize(x, tramos)
         cen = [(tramos[i - 1] + 125, np.median(y[k == i])) for i in np.unique(k) if (k == i).sum() >= 20]

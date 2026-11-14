@@ -142,7 +142,8 @@ def mensual(ds):
     out = {}
     for m in MESES:
         pr = ds.pr.sel(time=ds.time.dt.month == m)
-        out[m] = (pr.sum("time", skipna=True).values, (pr >= UMBRAL_DIA).sum("time").values)
+        out[m] = (pr.sum("time", skipna=True, min_count=1).values,
+                  (pr >= UMBRAL_DIA).sum("time").where(pr.notnull().any("time")).values)
     return out
 
 
@@ -155,10 +156,13 @@ def figura(ds, campos, mask, geom, titulo, etiqueta, archivo, subt=None):
     fig, axs = plt.subplots(1, n, figsize=(4.6 * n + 0.8, 5.6), sharey=True, squeeze=False)
     axs = axs[0]
     for ax, (m, c) in zip(axs, campos.items()):
-        h = ax.pcolormesh(ds.XLONG.values, ds.XLAT.values, np.ma.masked_where(~mask, c),
+        h = ax.pcolormesh(ds.XLONG.values, ds.XLAT.values, np.ma.masked_where(~mask | ~np.isfinite(c), c),
                           cmap=CMAP, vmin=vmin, vmax=vmax, shading="nearest")
         if geom is not None:
             dibujar_contorno(ax, geom)
+        if geom is None and not np.isfinite(c).all():     # datos con máscara propia: dibujar su borde
+            ax.contour(ds.XLONG.values, ds.XLAT.values, np.isfinite(c).astype(float), levels=[0.5],
+                       colors="k", linewidths=0.8)
         hgt = ds.attrs.get("_hgt")
         if hgt is not None and np.nanmax(hgt) - np.nanmin(hgt) > 1000:
             cs = ax.contour(ds.XLONG.values, ds.XLAT.values, hgt, levels=[500, 1500, 3000],
@@ -212,8 +216,8 @@ def main(anios, shp=None, nombre=None):
                "días", f"mapas_diaslluvia_{a}.png")
         for m in MESES:
             t = d[m][0][mask]
-            resumen.append(dict(anio=a, mes=m, total_medio_mm=t.mean(), total_min_mm=t.min(), total_max_mm=t.max(),
-                                dias_lluvia_medio=d[m][1][mask].mean()))
+            resumen.append(dict(anio=a, mes=m, total_medio_mm=np.nanmean(t), total_min_mm=np.nanmin(t),
+                                total_max_mm=np.nanmax(t), dias_lluvia_medio=np.nanmean(d[m][1][mask])))
     tabla = pd.DataFrame(resumen).round(1)
     tabla.to_csv(FIGURAS / pref("mapas_resumen_mensual.csv"), index=False)
     print("\nPromedio sobre las celdas mostradas:\n", tabla.to_string(index=False))
