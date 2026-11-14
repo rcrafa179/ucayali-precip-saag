@@ -65,7 +65,7 @@ python scripts/03_diario_obs.py era5 2005         # ERA5 a diario
 python scripts/03_diario_obs.py imerg 2005        # IMERG a diario
 ```
 
-**Mapas mensuales:** `python scripts/04_mapas_mensuales.py` lee `data/processed/saag_pr_diaria_FMA_<año>.nc` y guarda en `figures/` la climatología mensual (promedio de los años disponibles), el acumulado y los días con lluvia de cada año y un CSV de resumen. Por defecto usa `cuenca/49911.shp` (Intercuenca 49911, ANA, 4353 km², incluida en el repo); con `--shp otra.shp` usa otra cuenca. Muestra solo las celdas de 4 km que tocan la cuenca y dibuja su contorno; sin cuenca muestra todo el dominio. Los días con horas faltantes se excluyen de los acumulados.
+**Mapas mensuales:** `python scripts/04_mapas_mensuales.py <año>` lee `data/processed/saag_pr_diaria_FMA_<año>.nc` y guarda en `figures/` la climatología mensual (promedio de los años disponibles), el acumulado y los días con lluvia de cada año y un CSV de resumen. Por defecto usa `cuenca/49911.shp` (Intercuenca 49911, ANA, 4353 km², incluida en el repo); con `--shp otra.shp` usa otra cuenca. Muestra solo las celdas de 4 km que tocan la cuenca y dibuja su contorno; sin cuenca muestra todo el dominio. Los días con horas faltantes se excluyen de los acumulados.
 
 **Corridas WRF locales (`WRF2d_CTRL_*.nc`):** son recortes de la misma simulación WRF-SAAG sobre otro dominio (15.6–7.7°S, 77.0–70.5°W: Ucayali alto y medio con los Andes). `python scripts/05_wrf_ctrl.py ~/Downloads` los pasa al mismo formato diario FMA (`data/processed/wrfctrl_pr_diaria_FMA_<año>.nc`) y hace el ciclo diurno y la lluvia vs altura; luego `python scripts/04_mapas_mensuales.py --fuente wrfctrl` hace los mismos mapas mensuales (la Intercuenca 49911 queda fuera de ese dominio y se ignora).
 
@@ -79,31 +79,33 @@ Plan completo y reparto de tareas: [`docs/plan.md`](docs/plan.md).
 
 ## Cómo subir resultados al repositorio
 
-Cada integrante extrae su año y sube **solo los archivos de su año**: así nadie pisa el trabajo de otro y no hay conflictos.
+Cada integrante sube **solo los archivos de su año**. Todos llevan el año en el nombre, así nadie sobrescribe a nadie.
 
-| Qué | Dónde | ¿Va al repo? |
-|---|---|---|
-| Datos crudos (horarios, ERA5, IMERG…) | `data/raw/` | No (pesados) |
-| Resultado diario FMA de cada año | `data/processed/<fuente>_pr_diaria_FMA_<año>.nc` | **Sí** (< 10 MB) |
-| Figuras y tablas | `figures/` | **Sí** |
+| Archivo | Quién lo sube |
+|---|---|
+| `data/processed/saag_pr_diaria_FMA_<año>.nc` | quien extrajo ese año |
+| `figures/mapas_total_<año>.png` | quien extrajo ese año |
+| `figures/mapas_diaslluvia_<año>.png` | quien extrajo ese año |
+| `figures/mapas_resumen_mensual_<año>.csv` | quien extrajo ese año |
+| `figures/mapas_climatologia.png`, `figures/mapas_resumen_mensual_todos.csv` | solo la coordinación, al final |
 
-1. Extraer el año y comprobar `89 días | incompletos: 0`:
-   ```bash
-   git pull
-   python scripts/01_extraer_saag.py 2010 --workers 20
-   ```
-2. Subir **solo los archivos de ese año** (el `.nc` y sus mapas por año):
-   ```bash
-   git add data/processed/saag_pr_diaria_FMA_2010.nc figures/*_2010.png
-   git commit -m "SAAG: resultados FMA 2010"
-   git pull --rebase
-   git push
-   ```
-3. Las figuras que combinan años (`mapas_climatologia.png`, `mapas_total_comparacion.png`, `*_resumen_*.csv`) las regenera **una sola persona** (coordinación) cuando ya están todos los `.nc`; como los `.nc` están en el repo, basta `git pull` y `python scripts/04_mapas_mensuales.py`, sin volver a descargar nada.
+Los datos crudos (`data/raw/`) y los resultados del otro dominio (`wrfctrl_*`) no se suben.
 
-Los resultados de las corridas del otro dominio (`wrfctrl_*`, script `05_wrf_ctrl.py`) son solo de uso local: `.gitignore` los excluye y no se suben.
+**Pasos para cada año** (ejemplo 2010):
+```bash
+git pull
+python scripts/01_extraer_saag.py 2010 --workers 20     # debe terminar con 89 días, 0 incompletos
+python scripts/06_subir_anio.py 2010                    # hace los mapas de 2010 y sube SOLO lo de 2010
+```
+`06_subir_anio.py` comprueba que el `.nc` esté completo, genera los mapas del año si faltan y sube exactamente esos 4 archivos. No usen `git add .`.
 
-No usar `git add .` ni `git add figures/` completo: subiría versiones de las figuras combinadas hechas con años incompletos.
+**Al final (coordinación)**, con los tres `.nc` ya en el repo:
+```bash
+git pull
+python scripts/04_mapas_mensuales.py --combinado        # climatología 2005-2010-2015 + CSV con todos los años
+git add figures/mapas_climatologia.png figures/mapas_resumen_mensual_todos.csv
+git commit -m "Climatología FMA 2005-2010-2015" && git push
+```
 
 ## Reglas del grupo
 

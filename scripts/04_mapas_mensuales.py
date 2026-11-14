@@ -1,8 +1,9 @@
 """Mapas mensuales de precipitación SAAG (FMA) sobre el dominio del Ucayali bajo.
 
 Uso:
-    python scripts/04_mapas_mensuales.py                      # todos los años de data/processed/
-    python scripts/04_mapas_mensuales.py 2015 2010            # solo esos años
+    python scripts/04_mapas_mensuales.py 2010                 # SOLO los archivos de 2010 (lo normal)
+    python scripts/04_mapas_mensuales.py --combinado          # climatología + resumen de TODOS los años
+                                                              # (solo la coordinación, con los 3 .nc en el repo)
     python scripts/04_mapas_mensuales.py --shp ruta/cuenca.shp --nombre "Intercuenca 49911"
     python scripts/04_mapas_mensuales.py --fuente wrfctrl    # corridas locales (ver 05_wrf_ctrl.py)
 
@@ -14,11 +15,14 @@ Si se da una cuenca (--shp, o por defecto el .shp de cuenca/ — Intercuenca 499
 celdas de 4 km que tocan la cuenca (el resto en blanco) y dibujan su contorno. Sin cuenca se
 muestra todo el dominio.
 
-Lee data/processed/saag_pr_diaria_FMA_<año>.nc y escribe en figures/ (mismo estilo en todos):
-    mapas_climatologia.png        promedio de los años disponibles, Feb | Mar | Abr  (mm/mes)
-    mapas_total_<año>.png         acumulado mensual de cada año
-    mapas_diaslluvia_<año>.png    días con lluvia (>= UMBRAL_DIA mm) de cada año
-    mapas_resumen_mensual.csv     promedio sobre la cuenca (o dominio) por año y mes
+Lee data/processed/saag_pr_diaria_FMA_<año>.nc y escribe en figures/ (mismo estilo en todos).
+Por año (cada integrante sube los de su año; el nombre lleva el año, así nadie pisa a nadie):
+    mapas_total_<año>.png               acumulado mensual, Feb | Mar | Abr  (mm/mes)
+    mapas_diaslluvia_<año>.png          días con lluvia (>= UMBRAL_DIA mm)
+    mapas_resumen_mensual_<año>.csv     promedio, mín. y máx. sobre la cuenca por mes
+Combinados (solo con --combinado; usan todos los años disponibles):
+    mapas_climatologia.png              promedio de los años, Feb | Mar | Abr
+    mapas_resumen_mensual_todos.csv     une los CSV por año
 Los días con menos de 24 horas válidas no entran en los acumulados (se avisa).
 """
 import sys
@@ -187,7 +191,7 @@ def figura(ds, campos, mask, geom, titulo, etiqueta, archivo, subt=None):
     print(f"  {archivo}")
 
 
-def main(anios, shp=None, nombre=None):
+def main(anios, shp=None, nombre=None, combinado=False):
     geom, nom_shp = cargar_cuenca(shp)
     nombre = nombre or nom_shp
     sufijo = f" - {nombre}" if nombre else ""
@@ -208,23 +212,33 @@ def main(anios, shp=None, nombre=None):
         sys.exit("No se encontró ningún archivo procesado.")
     ds0 = next(iter(todos.values()))[0]
 
-    print("Climatología")
-    clim = {m: np.mean([d[m][0] for _, d in todos.values()], axis=0) for m in MESES}
-    lista = ", ".join(map(str, todos))
-    figura(ds0, clim, mask, geom, f"Mapa climatológico mensual de precipitación{sufijo}\n{ETIQUETA.get(FUENTE, FUENTE)}, promedio de {lista}",
-           "Precipitación (mm/mes)", "mapas_climatologia.png")
+    if combinado:
+        print("Climatología")
+        clim = {m: np.mean([d[m][0] for _, d in todos.values()], axis=0) for m in MESES}
+        lista = ", ".join(map(str, todos))
+        if len(todos) < len(ANIOS):
+            print(f"  aviso: solo hay {lista}; la climatología debería hacerse con {ANIOS}")
+        figura(ds0, clim, mask, geom, f"Mapa climatológico mensual de precipitación{sufijo}\n{ETIQUETA.get(FUENTE, FUENTE)}, promedio de {lista}",
+               "Precipitación (mm/mes)", "mapas_climatologia.png")
     for a, (ds, d) in todos.items():
         print(a)
         figura(ds0, {m: d[m][0] for m in MESES}, mask, geom, f"Precipitación acumulada mensual{sufijo}\n{ETIQUETA.get(FUENTE, FUENTE)}, {a}",
                "Precipitación (mm/mes)", f"mapas_total_{a}.png")
         figura(ds0, {m: d[m][1] for m in MESES}, mask, geom, f"Días con lluvia (≥ {UMBRAL_DIA:g} mm){sufijo}\n{ETIQUETA.get(FUENTE, FUENTE)}, {a}",
                "días", f"mapas_diaslluvia_{a}.png")
+        filas = []
         for m in MESES:
             t = d[m][0][mask]
-            resumen.append(dict(anio=a, mes=m, total_medio_mm=np.nanmean(t), total_min_mm=np.nanmin(t),
-                                total_max_mm=np.nanmax(t), dias_lluvia_medio=np.nanmean(d[m][1][mask])))
-    tabla = pd.DataFrame(resumen).round(1)
-    tabla.to_csv(FIGURAS / pref("mapas_resumen_mensual.csv"), index=False)
+            filas.append(dict(anio=a, mes=m, total_medio_mm=np.nanmean(t), total_min_mm=np.nanmin(t),
+                              total_max_mm=np.nanmax(t), dias_lluvia_medio=np.nanmean(d[m][1][mask])))
+        tabla = pd.DataFrame(filas).round(1)
+        tabla.to_csv(FIGURAS / pref(f"mapas_resumen_mensual_{a}.csv"), index=False)
+        print(f"  {pref(f'mapas_resumen_mensual_{a}.csv')}")
+        resumen.append(tabla)
+    tabla = pd.concat(resumen)
+    if combinado:
+        tabla.to_csv(FIGURAS / pref("mapas_resumen_mensual_todos.csv"), index=False)
+        print(f"  {pref('mapas_resumen_mensual_todos.csv')}")
     print("\nPromedio sobre las celdas mostradas:\n", tabla.to_string(index=False))
 
 
@@ -236,4 +250,8 @@ if __name__ == "__main__":
             i = args.index(k); opc[k] = args[i + 1]; del args[i:i + 2]
     from pathlib import Path
     FUENTE = opc.get("--fuente", "saag")
-    main([int(x) for x in args] or ANIOS, Path(opc["--shp"]) if "--shp" in opc else None, opc.get("--nombre"))
+    combinado = "--combinado" in args
+    args = [x for x in args if x != "--combinado"]
+    if not args and not combinado:
+        sys.exit("Indica el año (p. ej. `python scripts/04_mapas_mensuales.py 2010`) o --combinado.")
+    main([int(x) for x in args] or ANIOS, Path(opc["--shp"]) if "--shp" in opc else None, opc.get("--nombre"), combinado)
