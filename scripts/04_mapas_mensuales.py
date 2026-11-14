@@ -33,20 +33,59 @@ NOMBRES = {1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Juni
 
 
 # ---------------------------------------------------------------- cuenca
+def leer_shp(shp):
+    """Lector mínimo de shapefiles de polígonos (sin geopandas/pyogrio, que a veces chocan con PROJ).
+    Supone coordenadas lon/lat (WGS84), como el shapefile incluido en cuenca/."""
+    import struct
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    d = open(shp, "rb").read()
+    pos, anillos = 100, []
+    while pos + 8 <= len(d):
+        n = struct.unpack(">i", d[pos + 4:pos + 8])[0] * 2
+        rec = d[pos + 8:pos + 8 + n]; pos += 8 + n
+        if struct.unpack("<i", rec[:4])[0] not in (5, 15, 25):
+            continue
+        nparts, npts = struct.unpack("<2i", rec[36:44])
+        partes = list(struct.unpack(f"<{nparts}i", rec[44:44 + 4 * nparts])) + [npts]
+        xy = np.frombuffer(rec, "<f8", 2 * npts, 44 + 4 * nparts).reshape(npts, 2)
+        anillos += [xy[a:b] for a, b in zip(partes[:-1], partes[1:])]
+    ext, hue = [], []
+    for r in anillos:   # anillo horario = exterior, antihorario = hueco
+        area = 0.5 * np.sum(r[:-1, 0] * r[1:, 1] - r[1:, 0] * r[:-1, 1])
+        (ext if area < 0 else hue).append(Polygon(r))
+    geom = unary_union(ext)
+    for h in hue:
+        geom = geom.difference(h)
+    return geom
+
+
+def nombre_dbf(shp):
+    """Campo NOMBRE del primer registro del .dbf, o el nombre del archivo si no se puede leer."""
+    import struct
+    try:
+        d = open(shp.with_suffix(".dbf"), "rb").read()
+        nrec, hlen, rlen = struct.unpack("<IHH", d[4:12])
+        campos, off, k = [], 1, 32
+        while d[k] != 0x0D:
+            campos.append((d[k:k + 11].split(b"\0")[0].decode(), d[k + 16], off)); off += d[k + 16]; k += 32
+        for nom, ln, o in campos:
+            if nom == "NOMBRE":
+                return d[hlen + o:hlen + o + ln].decode("latin-1").strip()
+    except Exception:
+        pass
+    return shp.stem
+
+
 def cargar_cuenca(shp):
-    """Devuelve (geometría única en lon/lat, nombre por defecto) o (None, None)."""
+    """Devuelve (geometría única en lon/lat, nombre) o (None, None)."""
     if shp is None:   # por defecto: cuenca/*.shp del repo (Intercuenca 49911), luego data/aux/
         cand = [f for d in (RAIZ / "cuenca", AUX) if d.exists() for f in sorted(d.glob("*.shp"))]
         if not cand:
             return None, None
         shp = cand[0]
-    import geopandas as gpd
-    g = gpd.read_file(shp)
-    if g.crs is not None and g.crs.to_epsg() != 4326:
-        g = g.to_crs(4326)
-    print(f"Cuenca: {shp}  ({len(g)} polígono/s)")
-    nom = str(g["NOMBRE"].iloc[0]) if "NOMBRE" in g.columns else shp.stem
-    return g.geometry.union_all() if hasattr(g.geometry, "union_all") else g.unary_union, nom
+    print(f"Cuenca: {shp}")
+    return leer_shp(shp), nombre_dbf(shp)
 
 
 def mascara_celdas(ds, geom):
