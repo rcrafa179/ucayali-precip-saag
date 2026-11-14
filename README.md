@@ -49,10 +49,10 @@ Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 | Climatología y análisis (combinado) | — | ✅ | ✅ | rcrafa179 |
 
 | PISCO (imágenes) | — | ⏳ en `figures/pisco/` | — | AllSJ-23 |
-| ERA5 (comparación) | ⏳ `era5_pr_diaria_FMA_<año>.nc` | ⏳ `era5_comparacion_*` | ⏳ | — |
+| ERA5 (comparación) | ✅ `era5_pr_diaria_FMA_<año>.nc` | ✅ `era5_comparacion_*` | ✅ | rcrafa179 |
 | PISCO (comparación) | ⏳ `pisco_pr_diaria_FMA_<año>.nc` | ⏳ `pisco_comparacion_*` | ⏳ | — |
 
-Pendiente: subir las figuras de PISCO (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
+Pendiente: correr la comparación con PISCO (`02b_descargar_pisco.py` → `03_diario_obs.py pisco` → `08_comparar.py pisco`), subir las figuras de PISCO (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
 
 ## Resultados
 
@@ -108,13 +108,46 @@ Mapas de cada año: [2005](figures/mapas_total_2005.png), [2010](figures/mapas_t
 - Las distribuciones de lluvia diaria por celda son casi iguales hasta unos 50 mm/día. Las diferencias entre años aparecen en la cola: 2010 y 2005 tienen más días de más de 100 mm que 2015, y el máximo de una celda llega a 200 mm/día en 2010.
 - Por celda, llueve (≥ 1 mm) en la mitad de los días de FMA (44–50 de 89). En cambio, la media de la cuenca supera 1 mm en 64–70 días: casi siempre está lloviendo en *alguna* parte de la cuenca.
 
+### 4. Comparación con ERA5
+
+ERA5 es el reanálisis que fuerza al WRF-SAAG en los bordes de su dominio continental. Compararlos muestra **qué cambia al resolver la convección explícitamente a 4 km** en vez de parametrizarla a ~31 km (pregunta 4). No dice cuál de los dos acierta; para eso falta PISCO. Se usó el mismo día pluviométrico en ambos, y la correlación desplazada ±1 día confirma que las fechas casan (máximo en 0 días). Números: `figures/era5_comparacion_resumen.csv` y `figures/era5_comparacion_mensual.csv`.
+
+| | 2005 | 2010 | 2015 |
+|---|---|---|---|
+| Acumulado FMA, SAAG / ERA5 (mm) | 785 / 815 | 933 / 780 | 840 / 863 |
+| Sesgo de SAAG respecto a ERA5 | **−4 %** | **+20 %** | **−3 %** |
+| Correlación diaria / con media de 7 días | 0.14 / 0.51 | 0.24 / 0.31 | 0.19 / 0.31 |
+| Días con lluvia ≥ 1 mm, SAAG / ERA5 | 64 / **84** | 65 / **79** | 70 / **86** |
+| Días con más de 20 mm, SAAG / ERA5 | **15** / 7 | **22** / 6 | **10** / 6 |
+| Percentil 95 diario, SAAG / ERA5 (mm) | **38** / 23 | **35** / 22 | **32** / 22 |
+| Día máximo, SAAG / ERA5 (mm) | 56 / 48 | 48 / 31 | 43 / 32 |
+
+**Totales parecidos, reparto diferente.** En 2005 y 2015 el acumulado de FMA casi coincide (−4 % y −3 %); en 2010 SAAG da un 20 % más. Las diferencias grandes están en **febrero** (2005: −39 %, 2010: **+75 %**, 2015: −18 %). En marzo, SAAG llueve algo más (+6 a +23 %) y abril es parecido (−8 a +6 %). El febrero muy húmedo de 2010 que se ve en SAAG **no aparece en ERA5**.
+
+![Acumulado mensual SAAG vs ERA5](figures/era5_comparacion_mensual.png)
+
+**El día a día casi no coincide**: la correlación diaria es de 0.14 a 0.24 y sube a 0.3–0.5 con medias semanales. Es lo esperable. El SAAG es una corrida continua de 20 años que recibe ERA5 en los bordes de un dominio continental, así que dentro del dominio desarrolla sus propias tormentas: reproduce la estación y los períodos húmedos y secos de varios días, pero no qué día exacto llueve sobre una cuenca de 4000 km².
+
+![Serie diaria SAAG vs ERA5](figures/era5_comparacion_serie.png)
+
+**La diferencia más clara es cómo llueve.** ERA5 llueve casi todos los días (79–86 de 89), pero suave: su percentil 95 es de unos 22 mm/día y solo tiene 6–7 días de más de 20 mm. SAAG tiene más días secos (64–70 con lluvia), pero sus eventos son más intensos: percentil 95 de 32–38 mm/día y entre 10 y 22 días de más de 20 mm. En la curva de excedencia, SAAG supera a ERA5 en el 30 % de días más lluviosos y queda por debajo en el resto. Es el contraste típico entre la convección parametrizada (lluvia demasiado frecuente y débil) y la convección resuelta (más intermitente e intensa).
+
+![Dispersión y curva de excedencia](figures/era5_comparacion_dispersion.png)
+
+**Distribución espacial.** A 0.25°, ERA5 es casi uniforme sobre la cuenca (unos 750–900 mm en FMA). SAAG, incluso llevado a la misma malla, muestra un gradiente: más lluvia en el **este y noreste** (SAAG − ERA5 de +200 a +400 mm en 2010 y 2015) y menos en el **oeste** (−100 a −200 mm). Ese detalle interno de la cuenca solo lo da el modelo de 4 km. Si es real o un sesgo, lo dirá PISCO.
+
+![Mapas SAAG vs ERA5](figures/era5_comparacion_mapas.png)
+
+Nota: la descarga de ERA5 usada aquí cubre 4.5–5.25°S y 74–73°W (malla de 4×5). La celda de 0.25° del extremo norte no entra, y por eso queda fuera una franja de unos 5 km de la punta norte de la cuenca. Con la versión actual de `02_descargar_era5.py` esa celda ya se incluye.
+
 ### Conclusiones preliminares y cautelas
 
 1. En la Intercuenca 49911, el WRF-SAAG simula unos **780–930 mm entre febrero y abril**, con **marzo como mes más lluvioso** y un gradiente de **menos lluvia al oeste y más al norte y al este**.
 2. Las diferencias entre años son moderadas en el total (±9 %), pero grandes en el reparto mensual (febrero) y en cómo se concentra la lluvia (2005 frente a 2015).
-3. **Falta la evaluación.** Sin PISCO, IMERG y ERA5 no se puede decir si estos totales, gradientes o extremos son reales o sesgos del modelo. Es el siguiente paso.
-4. **Tres años no son una climatología.** Lo que aquí se llama "climatología" es el promedio de 2005, 2010 y 2015, útil solo como referencia para comparar esos años entre sí.
-5. Los máximos aislados de una sola celda (más de 150 mm/día) deben tomarse con cuidado: a 4 km una tormenta puede caer en un punto en el modelo y unos km más allá en la realidad.
+3. **Frente a ERA5**, el acumulado de FMA es parecido (−4 %, +20 %, −3 %), pero SAAG llueve **menos días y con más intensidad**, y muestra una **estructura espacial** dentro de la cuenca que ERA5 no tiene. La sincronía día a día es baja, como se espera de una simulación libre de convección explícita.
+4. **Falta la evaluación con observaciones.** Sin PISCO (o IMERG) no se puede decir cuál de los dos se acerca más a la realidad en totales, gradientes o extremos. Es el siguiente paso.
+5. **Tres años no son una climatología.** Lo que aquí se llama "climatología" es el promedio de 2005, 2010 y 2015, útil solo como referencia para comparar esos años entre sí.
+6. Los máximos aislados de una sola celda (más de 150 mm/día) deben tomarse con cuidado: a 4 km una tormenta puede caer en un punto en el modelo y unos km más allá en la realidad.
 
 ## Estructura
 
