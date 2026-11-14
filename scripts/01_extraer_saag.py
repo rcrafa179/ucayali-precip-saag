@@ -9,9 +9,10 @@ Uso (desde la raíz del repo):
 
 Salida: data/raw/saag/<año>/saag_prec_<YYYYMM>.nc  (un archivo por mes)
 
-ANTES DE CORRER:
- 1. Corre el modo "prueba" y revisa el nombre de la variable de precipitación.
-    Estructura confirmada en el catálogo THREDDS:
+Verificado con wrf2d_d01_2015-01-10_120000.nc:
+  - PREC_ACC_NC [mm], PREC_ACC_DT = 60 min -> precipitación horaria, no hay que diferenciar.
+  - Malla 1471 x 2027, fila 0 = sur. Caja Ucayali = y[1144:1509] x[182:433] (365 x 251).
+Estructura en el catálogo THREDDS:
       https://tds.gdex.ucar.edu/thredds/catalog/files/g/d616000/hist2D/201501/catalog.html
       -> hist2D/<YYYYMM>/wrf2d_d01_<YYYY-MM-DD>_<HHMMSS>.nc
 """
@@ -31,8 +32,10 @@ RUTA_2D = "hist2D/{yyyymm}/wrf2d_d01_{fecha}_{hhmmss}.nc"
 
 # La caja del Ucayali está en config.py
 
-# Variables candidatas de precipitación (se usa la primera que exista)
-VARS_PREC = ["PREC_ACC_NC", "PREC_ACC_C", "RAINNC", "RAINC"]
+# Precipitación: PREC_ACC_NC [mm] acumulada en PREC_ACC_DT = 60 min (ya es horaria).
+# CU_PHYSICS = 0 (sin cúmulos) -> PREC_ACC_NC es la precipitación total.
+# El valor con fecha HH:00 es la lluvia caída entre HH-1:00 y HH:00 (UTC).
+VARS_PREC = ["PREC_ACC_NC"]
 
 SALIDA = RAW_SAAG
 REINTENTOS = 4
@@ -102,7 +105,6 @@ def prueba():
     print(f"Forma: {da.shape} | min/max: {float(da.min()):.2f}/{float(da.max()):.2f}")
     dt = time.time() - t0
     print(f"Tiempo por hora: {dt:.1f}s -> ~{dt*8760/3600:.1f} h por año")
-    print("Si la variable es RAINNC/RAINC (acumulada desde el inicio), hay que diferenciar hora a hora.")
 
 
 def extraer_anio(anio):
@@ -124,7 +126,8 @@ def extraer_anio(anio):
         mes_da = xr.concat(trozos, "time").reindex(time=horas)  # horas faltantes -> NaN
         mes_da.name = "prec"
         mes_da.attrs["variable_original"] = var
-        mes_da.attrs["tiempo"] = "UTC"
+        mes_da.attrs["units"] = "mm"
+        mes_da.attrs["tiempo"] = "UTC; valor a HH:00 = lluvia entre HH-1 y HH"
         mes_da.to_dataset().to_netcdf(f, encoding={"prec": {"zlib": True, "complevel": 4, "dtype": "float32"}})
         print(f"Guardado {f}  (faltantes: {int(mes_da.isnull().all(dim=mes_da.dims[1:]).sum())} h)")
 

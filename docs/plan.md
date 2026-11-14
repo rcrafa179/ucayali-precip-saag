@@ -14,7 +14,8 @@ Marcar con `[x]` al terminar. Responsable entre corchetes.
 ## 2. Prueba piloto del SAAG
 - [x] Confirmar la ruta de los archivos en el catálogo THREDDS (`hist2D/<YYYYMM>/`) [Rafael]
 - [ ] `python scripts/01_extraer_saag.py prueba`: variable, unidades, tiempo por hora [ ]
-- [ ] Anotar aquí: variable = ____ · unidades = ____ · acumulación = ____ · s/hora = ____
+- [x] Variable = `PREC_ACC_NC` · unidades = mm · acumulación = 60 min (ya horaria) · caja = 365 × 251 puntos [Rafael]
+- [ ] Medir s/hora por OPeNDAP con el modo `prueba` = ____
 
 ## 3. Extracción del SAAG (máquina del grupo, en tmux)
 - [ ] 2005 [ ]

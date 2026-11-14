@@ -7,7 +7,12 @@ Caja común: **3.2°S–15.8°S, 77.8°W–69.8°W** (ver `scripts/config.py`). 
 - Catálogo: https://tds.gdex.ucar.edu/thredds/catalog/files/g/d616000/catalog.html
 - Archivos 2D horarios: `hist2D/<YYYYMM>/wrf2d_d01_YYYY-MM-DD_HHMMSS.nc` (~700 MB c/u, todo el continente).
 - OPeNDAP de un archivo: `https://tds.gdex.ucar.edu/thredds/dodsC/files/g/d616000/hist2D/201501/wrf2d_d01_2015-01-10_120000.nc`
-- Constantes (XLAT, XLONG, HGT): `INVARIANT/wrfconstants_SAAG.nc`.
+- Constantes (XLAT, XLONG, HGT): `INVARIANT/wrfconstants_SAAG.nc`. HGT no viene en los archivos 2D.
+- **Precipitación: `PREC_ACC_NC` [mm], acumulada cada 60 min (`PREC_ACC_DT = 60`)**, así que ya es horaria. El valor a las HH:00 UTC es la lluvia entre HH−1 y HH.
+- Sin parametrización de cúmulos (`CU_PHYSICS = 0`): `PREC_ACC_NC` es la precipitación total. `SNOW_ACC_NC` y `GRAUPEL_ACC_NC` son fracciones de esa misma precipitación.
+- Configuración del modelo (atributos del archivo): WRF V4.1.5, dx = 4 km, Lambert (TRUELAT −5/−40, STAND_LON −58), microfísica Thompson (8), PBL YSU (1), radiación RRTMG (4), superficie Noah-MP (4), dt = 20 s.
+- Malla 1471 × 2027, fila 0 = extremo sur. Caja del Ucayali: `y[1144:1509]`, `x[182:433]` (365 × 251 puntos).
+- Variables útiles para el análisis: `REFL_COM` (reflectividad compuesta), `AFWA_CAPE_MU`, `AFWA_PWAT`, `OLR` (para comparar con satélite) y `W_UP_MAX`.
 - Script: `python scripts/01_extraer_saag.py prueba`, luego `... 2005`, etc.
 - Salida: `data/raw/saag/<año>/saag_prec_<YYYYMM>.nc`, en UTC.
 
