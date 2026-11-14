@@ -12,7 +12,7 @@ Marcar con `[x]` al terminar. Responsable entre corchetes.
 - [ ] Verificar que la caja de `config.py` cubre toda la cuenca [ ]
 
 ## 2. Prueba piloto del SAAG
-- [ ] Confirmar la ruta de los archivos en el catálogo THREDDS y ajustar `RUTA_2D` [ ]
+- [x] Confirmar la ruta de los archivos en el catálogo THREDDS (`hist2D/<YYYYMM>/`) [Rafael]
 - [ ] `python scripts/01_extraer_saag.py prueba`: variable, unidades, tiempo por hora [ ]
 - [ ] Anotar aquí: variable = ____ · unidades = ____ · acumulación = ____ · s/hora = ____
 

@@ -5,7 +5,8 @@ Caja común: **3.2°S–15.8°S, 77.8°W–69.8°W** (ver `scripts/config.py`). 
 ## WRF-SAAG (NCAR GDEX d616000)
 - No requiere cuenta. Se lee por OPeNDAP solo la caja de la cuenca.
 - Catálogo: https://tds.gdex.ucar.edu/thredds/catalog/files/g/d616000/catalog.html
-- Archivos 2D horarios: `wrf2d_d01_YYYY-MM-DD_HHMMSS.nc` (~700 MB c/u, todo el continente).
+- Archivos 2D horarios: `hist2D/<YYYYMM>/wrf2d_d01_YYYY-MM-DD_HHMMSS.nc` (~700 MB c/u, todo el continente).
+- OPeNDAP de un archivo: `https://tds.gdex.ucar.edu/thredds/dodsC/files/g/d616000/hist2D/201501/wrf2d_d01_2015-01-10_120000.nc`
 - Constantes (XLAT, XLONG, HGT): `INVARIANT/wrfconstants_SAAG.nc`.
 - Script: `python scripts/01_extraer_saag.py prueba`, luego `... 2005`, etc.
 - Salida: `data/raw/saag/<año>/saag_prec_<YYYYMM>.nc`, en UTC.

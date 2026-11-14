@@ -10,11 +10,10 @@ Uso (desde la raíz del repo):
 Salida: data/raw/saag/<año>/saag_prec_<YYYYMM>.nc  (un archivo por mes)
 
 ANTES DE CORRER:
- 1. Abre en el navegador el catálogo THREDDS:
-      https://tds.gdex.ucar.edu/thredds/catalog/files/g/d616000/catalog.html
-    y navega hasta un archivo 2D horario (wrf2d_d01_YYYY-MM-DD_HHMMSS.nc).
-    Ajusta RUTA_2D abajo según la estructura de carpetas real.
- 2. Corre el modo "prueba" y revisa el nombre de la variable de precipitación.
+ 1. Corre el modo "prueba" y revisa el nombre de la variable de precipitación.
+    Estructura confirmada en el catálogo THREDDS:
+      https://tds.gdex.ucar.edu/thredds/catalog/files/g/d616000/hist2D/201501/catalog.html
+      -> hist2D/<YYYYMM>/wrf2d_d01_<YYYY-MM-DD>_<HHMMSS>.nc
 """
 import sys, time
 from pathlib import Path
@@ -27,9 +26,8 @@ from config import LAT_MIN, LAT_MAX, LON_MIN, LON_MAX, RAW_SAAG
 BASE = "https://tds.gdex.ucar.edu/thredds/dodsC/files/g/d616000"
 URL_CONST = f"{BASE}/INVARIANT/wrfconstants_SAAG.nc"
 
-# Plantilla de ruta de los archivos 2D horarios. VERIFICAR en el catálogo:
-# la carpeta podría ser por mes (p.ej. "200501") o por año/mes.
-RUTA_2D = "{yyyymm}/wrf2d_d01_{fecha}_{hhmmss}.nc"
+# Ruta de los archivos 2D horarios (confirmada en el catálogo THREDDS)
+RUTA_2D = "hist2D/{yyyymm}/wrf2d_d01_{fecha}_{hhmmss}.nc"
 
 # La caja del Ucayali está en config.py
 
