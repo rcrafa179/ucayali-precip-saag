@@ -240,6 +240,10 @@ Si la descarga falla (por ejemplo por la red de la universidad), el script impri
 
 Salidas: `figures/pisco_comparacion_*`, iguales a las de ERA5. Con PISCO sí se evalúa el modelo (preguntas 1–3), con la cautela de que en el llano amazónico PISCO tiene pocas estaciones y depende más del satélite.
 
+#### IMERG
+
+`python scripts/03_diario_obs.py imerg <año>` con los archivos en `data/raw/imerg/<año>/` (ver `docs/datos.md`). La comparación con `08_comparar.py imerg` queda para cuando esos datos estén descargados.
+
 ### Corridas WRF del otro dominio (solo uso local)
 
 Los archivos `WRF2d_CTRL_*.nc` son recortes de la misma simulación WRF-SAAG sobre otro dominio (15.6–7.7°S, 77.0–70.5°W: Ucayali alto y medio, con los Andes). La Intercuenca 49911 queda fuera de ese dominio.
