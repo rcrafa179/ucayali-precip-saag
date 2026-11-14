@@ -11,7 +11,7 @@ Uso (desde la raíz del repo):
     python scripts/01_extraer_saag.py 2005                 # FMA 2005 (reanudable por mes)
     python scripts/01_extraer_saag.py 2005 --workers 8
 
-Medidor de avance: mientras corre imprime cada ~30 s una línea de estado, p. ej.
+Medidor de avance: mientras corre imprime cada minuto una línea de estado, p. ej.
   [2005-03] 1203/2136 h (56%) | 31.2 h/min (1.9 s/h) | reintentos 4 | fallidas 0 | transcurrido 0:38:10 | faltan ~0:29:05
 La velocidad es la de los últimos 5 min (no el promedio total) y el tiempo restante sale de ella.
 Si "reintentos" sube o la velocidad cae, NCAR está limitando: bajar --workers.
@@ -92,7 +92,7 @@ def hms(seg):
 
 class Progreso:
     """Medidor de avance del año: una línea de estado cada INTERVALO segundos."""
-    INTERVALO = 30    # s entre líneas de estado
+    INTERVALO = 60    # s entre líneas de estado
     VENTANA = 300     # s de historia usados para la velocidad actual
     MIN_HIST = 20     # s de historia mínima antes de mostrar velocidad y tiempo restante
 

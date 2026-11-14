@@ -65,7 +65,7 @@ python scripts/03_diario_obs.py era5 2005         # ERA5 a diario
 python scripts/03_diario_obs.py imerg 2005        # IMERG a diario
 ```
 
-Mientras corre, `01_extraer_saag.py` imprime cada ~30 s una línea de estado con el avance del año, la velocidad de los últimos 5 min, los reintentos, las horas fallidas y el tiempo restante. Si los reintentos suben o la velocidad cae, NCAR está limitando: bajen `--workers`.
+Mientras corre, `01_extraer_saag.py` imprime cada minuto una línea de estado con el avance del año, la velocidad de los últimos 5 min, los reintentos, las horas fallidas y el tiempo restante. Si los reintentos suben o la velocidad cae, NCAR está limitando: bajen `--workers`.
 
 Salidas diarias en `data/processed/`: `saag_pr_diaria_FMA_<año>.nc`, `era5_...`, `imerg_...`.
 Cada archivo incluye un contador de pasos válidos por día (`n_horas` / `n_pasos`) para detectar días incompletos.
