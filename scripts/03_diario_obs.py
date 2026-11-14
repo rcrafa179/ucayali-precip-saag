@@ -5,21 +5,24 @@ con la MISMA definición de día pluviométrico que el SAAG (config.DIA_INICIO_U
 Uso (desde la raíz del repo):
     python scripts/03_diario_obs.py era5  2005 2010 2015
     python scripts/03_diario_obs.py imerg 2005 2010 2015
+    python scripts/03_diario_obs.py pisco 2005 2010 2015
 
 Entradas:
     data/raw/era5/era5_tp_<YYYYMM>.nc              (02_descargar_era5.py)
     data/raw/imerg/<año>/*.nc4 (o *.nc)            (GES DISC, GPM_3IMERGHH V07, recortado)
+    data/raw/pisco/pisco_pr_<año>.nc               (02b_descargar_pisco.py, ya diario)
 Salidas:
     data/processed/era5_pr_diaria_FMA_<año>.nc
     data/processed/imerg_pr_diaria_FMA_<año>.nc
-  Variables: pr [mm/día] y n_pasos (pasos válidos: ERA5 24, IMERG 48 = completo).
+    data/processed/pisco_pr_diaria_FMA_<año>.nc
+  Variables: pr [mm/día] y n_pasos (pasos válidos: ERA5 24, IMERG 48, PISCO 1 = completo).
 """
 import sys
 import numpy as np
 import pandas as pd
 import xarray as xr
-from config import (RAW_ERA5, RAW_IMERG, PROCESSED, ANIOS, PERIODO,
-                    LAT_MIN, LAT_MAX, LON_MIN, LON_MAX, DIA_INICIO_UTC, dias)
+from config import (RAW_ERA5, RAW_IMERG, RAW_PISCO, PROCESSED, ANIOS, PERIODO,
+                    LAT_MIN, LAT_MAX, LON_MIN, LON_MAX, DIA_INICIO_UTC, PISCO_DESFASE_DIAS, dias)
 
 
 def a_diario(pr, fin_de_paso, anio, pasos_por_dia):
@@ -81,15 +84,55 @@ def imerg(anio):
     return out
 
 
+def _tiempo(t):
+    """Convierte el eje de tiempo de IRIDL (p. ej. 'julian_day' o 'days since 1960-01-01') a fechas."""
+    u = t.attrs.get("units", "")
+    if "since" in u:
+        unidad, origen = u.split(" since ")
+        origen = pd.Timestamp(origen.strip().split(" ")[0])
+        paso = {"days": "D", "day": "D", "hours": "h", "hour": "h"}[unidad.strip().lower()]
+        return (origen + pd.to_timedelta(t.values.astype(float), unit=paso)).floor("D")
+    if "julian" in u.lower():   # días julianos
+        return pd.to_datetime(t.values.astype(float) - 2440587.5, unit="D").floor("D")
+    return pd.DatetimeIndex(t.values).floor("D")
+
+
+def pisco(anio):
+    f = RAW_PISCO / f"pisco_pr_{anio}.nc"
+    if not f.exists():
+        sys.exit(f"No existe {f}. Primero: python scripts/02b_descargar_pisco.py {anio}")
+    ds = xr.open_dataset(f, decode_times=False)
+    nombre = "Prec" if "Prec" in ds else list(ds.data_vars)[0]
+    p = ds[nombre]
+    ren = {}
+    for viejo, nuevo in (("X", "lon"), ("longitude", "lon"), ("Y", "lat"), ("latitude", "lat"), ("T", "time")):
+        if viejo in p.dims:
+            ren[viejo] = nuevo
+    p = p.rename(ren)
+    p = p.assign_coords(time=_tiempo(ds[[k for k, v in ren.items() if v == "time"][0]])
+                        + pd.Timedelta(days=PISCO_DESFASE_DIAS))
+    p = p.where((p > -1) & (p < 1e4))                    # quita el missing_value (-3.4e38)
+    p = p.transpose("time", "lat", "lon").sortby("lat").sortby("lon")
+    p = p.reindex(time=dias(anio))
+    n = p.notnull().any(dim=["lat", "lon"]).astype("int16")
+    out = xr.Dataset({"pr": p.astype("float32"), "n_pasos": n})
+    out["pr"].attrs = {"units": "mm/day", "long_name": "precipitación diaria acumulada"}
+    out["n_pasos"].attrs = {"long_name": "1 = hay dato ese día"}
+    out.attrs.update(fuente="PISCOp v2.1 stable daily (SENAMHI), vía IRI Data Library",
+                     dia_pluviometrico="convención SENAMHI: 07:00 de D a 07:00 de D+1",
+                     desfase_aplicado_dias=PISCO_DESFASE_DIAS)
+    return out
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 2 or sys.argv[1] not in ("era5", "imerg"):
+    if len(sys.argv) < 2 or sys.argv[1] not in ("era5", "imerg", "pisco"):
         sys.exit(__doc__)
     fuente = sys.argv[1]
     PROCESSED.mkdir(parents=True, exist_ok=True)
     for anio in [int(a) for a in sys.argv[2:]] or ANIOS:
-        ds = era5(anio) if fuente == "era5" else imerg(anio)
+        ds = {"era5": era5, "imerg": imerg, "pisco": pisco}[fuente](anio)
         f = PROCESSED / f"{fuente}_pr_diaria_{PERIODO}_{anio}.nc"
         ds.to_netcdf(f)
-        inc = int((ds["n_pasos"] < (24 if fuente == "era5" else 48)).sum())
+        inc = int((ds["n_pasos"] < {"era5": 24, "imerg": 48, "pisco": 1}[fuente]).sum())
         print(f"{f.name}: {ds.sizes['time']} días, {inc} incompletos, "
               f"media de la caja {float(ds['pr'].mean()):.1f} mm/día")

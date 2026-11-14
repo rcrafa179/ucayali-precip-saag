@@ -23,6 +23,12 @@ AREA_CDS = [LAT_MAX, LON_MIN, LAT_MIN, LON_MAX]  # N, O, S, E (formato Copernicu
 DIA_INICIO_UTC = 12
 UTC_OFFSET_H = -5  # Perú
 
+# PISCO viene ya diario. Por convención SENAMHI el día D es la lluvia de 07:00 de D a 07:00 de D+1
+# (igual que DIA_INICIO_UTC = 12), pero no está 100 % confirmado cómo etiqueta PISCO la fecha.
+# 08_comparar.py pisco imprime la correlación con SAAG desplazando PISCO -1, 0 y +1 días: si el máximo
+# no está en 0, poner aquí ese desplazamiento (se SUMA a la fecha de PISCO) y rehacer 03_diario_obs.py pisco.
+PISCO_DESFASE_DIAS = 0
+
 # ---------------- Carpetas (ignoradas por git) ----------------
 DATA = RAIZ / "data"
 RAW_SAAG = DATA / "raw" / "saag"

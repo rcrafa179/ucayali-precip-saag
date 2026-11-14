@@ -88,6 +88,6 @@ if __name__ == "__main__":
     c = cliente()
     for anio in [int(a) for a in args] or ANIOS:
         descargar(c, anio)
-    print("\nSiguiente: python scripts/03_diario_obs.py era5   y luego   python scripts/08_comparar_era5.py")
+    print("\nSiguiente: python scripts/03_diario_obs.py era5   y luego   python scripts/08_comparar.py era5")
 # tp está en metros (x1000 -> mm). El valor a la hora H es lo acumulado entre H-1 y H (UTC),
 # misma convención que PREC_ACC_NC del SAAG.

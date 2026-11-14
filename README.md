@@ -50,6 +50,7 @@ Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 
 | PISCO (imágenes) | — | ⏳ en `figures/pisco/` | — | AllSJ-23 |
 | ERA5 (comparación) | ⏳ `era5_pr_diaria_FMA_<año>.nc` | ⏳ `era5_comparacion_*` | ⏳ | — |
+| PISCO (comparación) | ⏳ `pisco_pr_diaria_FMA_<año>.nc` | ⏳ `pisco_comparacion_*` | ⏳ | — |
 
 Pendiente: subir las figuras de PISCO (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
 
@@ -149,13 +150,14 @@ Todos los comandos se corren **desde la raíz del repo**.
 | Script | Qué hace |
 |---|---|
 | `01_extraer_saag.py` | Lee de NCAR solo la caja del dominio, hora por hora, y guarda la lluvia diaria FMA de un año |
-| `02_descargar_era5.py` | Descarga ERA5 horario de FMA |
-| `03_diario_obs.py` | Pasa ERA5 o IMERG a diario con el mismo día pluviométrico |
+| `02_descargar_era5.py` | Descarga ERA5 horario de FMA (guarda tu clave con `--clave`) |
+| `02b_descargar_pisco.py` | Descarga PISCOp v2.1 diario de FMA (sin cuenta) |
+| `03_diario_obs.py` | Pasa ERA5, IMERG o PISCO a diario con el mismo día pluviométrico |
 | `04_mapas_mensuales.py` | Mapas mensuales y CSV de resumen sobre la cuenca |
 | `05_wrf_ctrl.py` | Corridas locales `WRF2d_CTRL_*.nc` de otro dominio (solo uso local, ver abajo) |
 | `06_subir_anio.py` | Sube al repo los resultados de un año, siempre de la misma forma |
 | `07_analisis.py` | Serie diaria, anomalías, intensidad y extremos de todos los años (sección Resultados) |
-| `08_comparar_era5.py` | Compara SAAG con ERA5 sobre la cuenca: totales, sesgo, correlación, extremos y mapas |
+| `08_comparar.py` | Compara SAAG con ERA5 o PISCO sobre la cuenca: totales, sesgo, correlación, extremos, mapas y chequeo de fechas |
 
 ### 1. Extraer SAAG
 
@@ -190,7 +192,9 @@ Con `--combinado`:
 
 Por defecto usa `cuenca/49911.shp`; para usar otra cuenca: `--shp otra.shp`. Los días con horas faltantes no entran en los acumulados (el script avisa). Si unos pocos valores extremos dominan la escala de color, esta se satura en el percentil 99 (barra con flecha).
 
-### 3. Comparación con ERA5
+### 3. Comparación con ERA5 y PISCO
+
+#### ERA5
 
 **Una sola vez:**
 1. Crear una cuenta en https://cds.climate.copernicus.eu.
@@ -206,7 +210,7 @@ Por defecto usa `cuenca/49911.shp`; para usar otra cuenca: `--shp otra.shp`. Los
 ```bash
 python scripts/02_descargar_era5.py          # 4 pedidos por año (feb, mar, abr y 1-may), unos MB
 python scripts/03_diario_obs.py era5         # mismo día pluviométrico que SAAG
-python scripts/08_comparar_era5.py
+python scripts/08_comparar.py era5
 ```
 
 La descarga cubre 4.25–5.5°S y 74.25–72.75°W, alineada a la malla de 0.25° de ERA5 e incluyendo las celdas del borde. Cada pedido espera en la cola de Copernicus: puede tardar de segundos a varios minutos. Si se corta, al relanzar salta los meses ya descargados.
@@ -222,7 +226,19 @@ Salidas en `figures/`:
 
 ERA5 no es una observación: es el reanálisis que fuerza al WRF. La comparación responde la pregunta 4 (¿qué aporta resolver la convección a 4 km?), no si el modelo acierta. Para eso hace falta PISCO o IMERG.
 
-**IMERG:** `python scripts/03_diario_obs.py imerg <año>` con los archivos en `data/raw/imerg/<año>/` (ver `docs/datos.md`). **PISCO:** pendiente; falta el archivo de datos y confirmar con qué fecha etiqueta sus días.
+#### PISCO (referencia observacional)
+
+PISCOp v2.1 (SENAMHI) versión *stable* tiene datos diarios de 1981 a 2016, a 0.1°. Se descarga recortado desde la [IRI Data Library](https://iridl.ldeo.columbia.edu/SOURCES/.SENAMHI/.HSR/.PISCO/.Prec/.v2p1/), **sin cuenta**:
+```bash
+python scripts/02b_descargar_pisco.py        # FMA 2005, 2010 y 2015 (+1 día a cada lado), unos kB
+python scripts/03_diario_obs.py pisco
+python scripts/08_comparar.py pisco
+```
+Si la descarga falla (por ejemplo por la red de la universidad), el script imprime la URL. Ábranla en el navegador y guarden el archivo como `data/raw/pisco/pisco_pr_<año>.nc`.
+
+**Fechas:** PISCO ya viene diario. Por convención de SENAMHI, el día D es la lluvia de 07:00 de D a 07:00 de D+1, igual que nuestro día pluviométrico, pero no está confirmado cómo etiqueta PISCO la fecha. Por eso `08_comparar.py` imprime la correlación con SAAG desplazando PISCO −1, 0 y +1 días. Si el máximo no está en 0, el script indica qué valor poner en `PISCO_DESFASE_DIAS` (`scripts/config.py`); luego hay que rehacer `03_diario_obs.py pisco` y la comparación.
+
+Salidas: `figures/pisco_comparacion_*`, iguales a las de ERA5. Con PISCO sí se evalúa el modelo (preguntas 1–3), con la cautela de que en el llano amazónico PISCO tiene pocas estaciones y depende más del satélite.
 
 ### Corridas WRF del otro dominio (solo uso local)
 
