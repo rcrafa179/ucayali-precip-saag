@@ -65,7 +65,7 @@ python scripts/03_diario_obs.py era5 2005         # ERA5 a diario
 python scripts/03_diario_obs.py imerg 2005        # IMERG a diario
 ```
 
-**Mapas mensuales:** `python scripts/04_mapas_mensuales.py --shp ruta/cuenca.shp --nombre "Intercuenca 49911"` lee `data/processed/saag_pr_diaria_FMA_<año>.nc` y guarda en `figures/` la climatología mensual (promedio de los años disponibles), el acumulado y los días con lluvia de cada año y un CSV de resumen. Con `--shp` (o un `.shp` en `data/aux/`) muestra solo las celdas de 4 km que tocan la cuenca y dibuja su contorno; sin cuenca muestra todo el dominio. Los días con horas faltantes se excluyen de los acumulados.
+**Mapas mensuales:** `python scripts/04_mapas_mensuales.py` lee `data/processed/saag_pr_diaria_FMA_<año>.nc` y guarda en `figures/` la climatología mensual (promedio de los años disponibles), el acumulado y los días con lluvia de cada año y un CSV de resumen. Por defecto usa `cuenca/49911.shp` (Intercuenca 49911, ANA, 4353 km², incluida en el repo); con `--shp otra.shp` usa otra cuenca. Muestra solo las celdas de 4 km que tocan la cuenca y dibuja su contorno; sin cuenca muestra todo el dominio. Los días con horas faltantes se excluyen de los acumulados.
 
 Mientras corre, `01_extraer_saag.py` imprime cada minuto una línea de estado con el avance del año, la velocidad de los últimos 5 min, los reintentos, las horas fallidas y el tiempo restante. Si los reintentos suben o la velocidad cae, NCAR está limitando: bajen `--workers`.
 

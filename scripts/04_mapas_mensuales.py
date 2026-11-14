@@ -5,7 +5,7 @@ Uso:
     python scripts/04_mapas_mensuales.py 2015 2010            # solo esos años
     python scripts/04_mapas_mensuales.py --shp ruta/cuenca.shp --nombre "Intercuenca 49911"
 
-Si se da una cuenca (--shp, o el primer .shp que haya en data/aux/), los mapas muestran solo las
+Si se da una cuenca (--shp, o por defecto el .shp de cuenca/ — Intercuenca 49911 — o de data/aux/), los mapas muestran solo las
 celdas de 4 km que tocan la cuenca (el resto en blanco) y dibujan su contorno. Sin cuenca se
 muestra todo el dominio.
 
@@ -24,7 +24,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from config import PROCESSED, FIGURAS, AUX, PERIODO, MESES, ANIOS
+from config import PROCESSED, FIGURAS, AUX, RAIZ, PERIODO, MESES, ANIOS
 
 UMBRAL_DIA = 1.0     # mm/día para contar un día como lluvioso
 CMAP = "RdPu"
@@ -35,8 +35,8 @@ NOMBRES = {1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Juni
 # ---------------------------------------------------------------- cuenca
 def cargar_cuenca(shp):
     """Devuelve (geometría única en lon/lat, nombre por defecto) o (None, None)."""
-    if shp is None:
-        cand = sorted(AUX.glob("*.shp")) if AUX.exists() else []
+    if shp is None:   # por defecto: cuenca/*.shp del repo (Intercuenca 49911), luego data/aux/
+        cand = [f for d in (RAIZ / "cuenca", AUX) if d.exists() for f in sorted(d.glob("*.shp"))]
         if not cand:
             return None, None
         shp = cand[0]
@@ -45,7 +45,8 @@ def cargar_cuenca(shp):
     if g.crs is not None and g.crs.to_epsg() != 4326:
         g = g.to_crs(4326)
     print(f"Cuenca: {shp}  ({len(g)} polígono/s)")
-    return g.geometry.union_all() if hasattr(g.geometry, "union_all") else g.unary_union, shp.stem
+    nom = str(g["NOMBRE"].iloc[0]) if "NOMBRE" in g.columns else shp.stem
+    return g.geometry.union_all() if hasattr(g.geometry, "union_all") else g.unary_union, nom
 
 
 def mascara_celdas(ds, geom):
