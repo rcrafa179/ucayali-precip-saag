@@ -56,6 +56,8 @@ def era5(anio):
         ds = ds.rename(valid_time="time")
     ds = ds.rename({k: v for k, v in {"latitude": "lat", "longitude": "lon"}.items() if k in ds.coords})
     tp = (ds["tp"] * 1000).sortby("time")          # m -> mm por hora
+    for d in [d for d in tp.dims if d not in ("time", "lat", "lon")]:   # expver / number del CDS nuevo
+        tp = tp.max(d) if d == "expver" else tp.isel({d: 0})
     tp = tp.drop_vars([v for v in tp.coords if v not in ("time", "lat", "lon")])
     out = a_diario(tp.load(), fin_de_paso=True, anio=anio, pasos_por_dia=24)
     out.attrs["fuente"] = "ERA5 total_precipitation horario"

@@ -49,6 +49,7 @@ Instrucciones de descarga: [`docs/datos.md`](docs/datos.md).
 | Climatología y análisis (combinado) | — | ✅ | ✅ | rcrafa179 |
 
 | PISCO (imágenes) | — | ⏳ en `figures/pisco/` | — | AllSJ-23 |
+| ERA5 (comparación) | ⏳ `era5_pr_diaria_FMA_<año>.nc` | ⏳ `era5_comparacion_*` | ⏳ | — |
 
 Pendiente: subir las figuras de PISCO (ver [`figures/pisco/README.md`](figures/pisco/README.md)) y comparar cuantitativamente con PISCO, IMERG y ERA5 (preguntas 1–4). Para una comparación numérica hace falta el archivo de datos de PISCO (NetCDF diario), no solo imágenes.
 
@@ -154,6 +155,7 @@ Todos los comandos se corren **desde la raíz del repo**.
 | `05_wrf_ctrl.py` | Corridas locales `WRF2d_CTRL_*.nc` de otro dominio (solo uso local, ver abajo) |
 | `06_subir_anio.py` | Sube al repo los resultados de un año, siempre de la misma forma |
 | `07_analisis.py` | Serie diaria, anomalías, intensidad y extremos de todos los años (sección Resultados) |
+| `08_comparar_era5.py` | Compara SAAG con ERA5 sobre la cuenca: totales, sesgo, correlación, extremos y mapas |
 
 ### 1. Extraer SAAG
 
@@ -188,15 +190,39 @@ Con `--combinado`:
 
 Por defecto usa `cuenca/49911.shp`; para usar otra cuenca: `--shp otra.shp`. Los días con horas faltantes no entran en los acumulados (el script avisa). Si unos pocos valores extremos dominan la escala de color, esta se satura en el percentil 99 (barra con flecha).
 
-### 3. Referencias (ERA5, IMERG, PISCO)
+### 3. Comparación con ERA5
 
+**Una sola vez:**
+1. Crear una cuenta en https://cds.climate.copernicus.eu.
+2. Copiar el *Personal Access Token* desde https://cds.climate.copernicus.eu/profile.
+3. Aceptar la licencia de *ERA5 hourly data on single levels*: pestaña **Download** de https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels, al final de la página. Sin esto, la descarga falla con un error de licencia.
+4. Guardar la clave:
+   ```bash
+   python scripts/02_descargar_era5.py --clave TU-TOKEN
+   ```
+   Se guarda en `~/.cdsapirc`, **fuera del repo**. Nunca la peguen en un script ni la suban.
+
+**Descargar, pasar a diario y comparar** (2005, 2010 y 2015; o indicar un año):
 ```bash
-python scripts/02_descargar_era5.py 2010
-python scripts/03_diario_obs.py era5 2010
-python scripts/03_diario_obs.py imerg 2010
+python scripts/02_descargar_era5.py          # 4 pedidos por año (feb, mar, abr y 1-may), unos MB
+python scripts/03_diario_obs.py era5         # mismo día pluviométrico que SAAG
+python scripts/08_comparar_era5.py
 ```
 
-Salidas: `data/processed/era5_pr_diaria_FMA_<año>.nc` e `imerg_...`, con `n_pasos` para detectar días incompletos. PISCO está pendiente: falta confirmar con qué fecha etiqueta sus días.
+La descarga cubre 4.25–5.5°S y 74.25–72.75°W, alineada a la malla de 0.25° de ERA5 e incluyendo las celdas del borde. Cada pedido espera en la cola de Copernicus: puede tardar de segundos a varios minutos. Si se corta, al relanzar salta los meses ya descargados.
+
+Cómo se compara:
+- **Media de la cuenca:** en SAAG, el promedio de sus 330 celdas de 4 km. En ERA5, el promedio de sus celdas de 0.25° ponderado por el área que cae dentro de la cuenca (unas 14 celdas, equivalentes a ~6 completas).
+- **Mapas:** el SAAG también se promedia en la malla de ERA5, para que la diferencia SAAG − ERA5 sea entre campos de la misma resolución.
+
+Salidas en `figures/`:
+- `era5_comparacion_resumen.csv`: totales, sesgo (mm y %), correlación diaria y semanal, RMSE, días lluviosos, días de más de 20 mm, percentil 95 y máximos.
+- `era5_comparacion_mensual.csv`: acumulado de cada mes en SAAG y ERA5.
+- Figuras: series diarias (`era5_comparacion_serie.png`), barras mensuales (`..._mensual.png`), dispersión y curva de excedencia (`..._dispersion.png`) y mapas (`..._mapas.png`).
+
+ERA5 no es una observación: es el reanálisis que fuerza al WRF. La comparación responde la pregunta 4 (¿qué aporta resolver la convección a 4 km?), no si el modelo acierta. Para eso hace falta PISCO o IMERG.
+
+**IMERG:** `python scripts/03_diario_obs.py imerg <año>` con los archivos en `data/raw/imerg/<año>/` (ver `docs/datos.md`). **PISCO:** pendiente; falta el archivo de datos y confirmar con qué fecha etiqueta sus días.
 
 ### Corridas WRF del otro dominio (solo uso local)
 
