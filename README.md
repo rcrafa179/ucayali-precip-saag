@@ -58,6 +58,23 @@ Pendiente: IMERG (opcional) para una segunda referencia observacional (ver [`fig
 
 Todo lo que sigue es **WRF-SAAG (4 km) sobre la Intercuenca 49911**, FMA de 2005, 2010 y 2015, con día pluviométrico de 07:00 a 07:00 hora local. Todavía **no hay comparación con observaciones**, así que se describe lo que simula el modelo, no si acierta. Los números salen de `figures/mapas_resumen_mensual_todos.csv` y `figures/analisis_resumen_FMA.csv`, y se reproducen con `python scripts/04_mapas_mensuales.py --combinado` y `python scripts/07_analisis.py`.
 
+### Archivos de resultados
+
+Todo está en `figures/` (tablas `.csv` que se abren en Excel) y `data/processed/` (NetCDF):
+
+| Archivo | Qué contiene |
+|---|---|
+| `saag_diaria_cuenca_<año>.csv` | **Lluvia diaria de SAAG** en la cuenca, un día por fila: media, mediana, mínimo y máximo entre celdas (mm), % de la cuenca con lluvia ≥ 1 mm y si el día está completo |
+| `pisco_diaria_cuenca_<año>.csv` | Lo mismo para PISCO |
+| `tres_fuentes_diaria.csv` | Lluvia diaria media de la cuenca de **SAAG, ERA5 y PISCO**, lado a lado (267 días) |
+| `mapas_resumen_mensual_<año>.csv`, `..._todos.csv` | Acumulado mensual de SAAG (media, mín. y máx. de la cuenca) y días con lluvia; con prefijo `pisco_`, lo mismo para PISCO |
+| `analisis_resumen_FMA.csv` | Resumen de FMA por año de SAAG: totales, intensidad, extremos y concentración; con prefijo `pisco_`, lo mismo para PISCO |
+| `era5_comparacion_*.csv`, `pisco_comparacion_*.csv` | Comparación de SAAG con cada referencia: resumen por año y por mes |
+| `tres_fuentes_resumen.csv` | SAAG y ERA5 frente a PISCO (pregunta 4) |
+| `data/processed/<fuente>_pr_diaria_FMA_<año>.nc` | Campos diarios completos (todas las celdas), para quien quiera hacer otros cálculos |
+
+En los CSV diarios de una sola fuente, SAAG promedia sus 330 celdas de 4 km que tocan la cuenca y PISCO sus 54 celdas de 0.1°. En `tres_fuentes_diaria.csv`, ERA5 y PISCO se ponderan por el área de cada celda que cae dentro de la cuenca, por eso PISCO difiere ~1 % entre ambos archivos.
+
 ### Resumen por año
 
 | | 2005 | 2010 | 2015 |
@@ -263,9 +280,9 @@ Todos los comandos se corren **desde la raíz del repo**.
 | `04_mapas_mensuales.py` | Mapas mensuales y CSV de resumen sobre la cuenca |
 | `05_wrf_ctrl.py` | Corridas locales `WRF2d_CTRL_*.nc` de otro dominio (solo uso local, ver abajo) |
 | `06_subir_anio.py` | Sube al repo los resultados de un año, siempre de la misma forma |
-| `07_analisis.py` | Serie diaria, anomalías, intensidad y extremos de todos los años (sección Resultados) |
+| `07_analisis.py` | Serie diaria (figura y **CSV diario**), anomalías, intensidad y extremos de todos los años; `--fuente pisco` para PISCO |
 | `08_comparar.py` | Compara SAAG con ERA5 o PISCO sobre la cuenca: totales, sesgo, correlación, extremos, mapas y chequeo de fechas |
-| `09_tres_fuentes.py` | SAAG y ERA5 frente a PISCO en una sola tabla (pregunta 4) |
+| `09_tres_fuentes.py` | SAAG y ERA5 frente a PISCO en una sola tabla (pregunta 4) y CSV diario con las tres fuentes |
 
 ### 1. Extraer SAAG
 

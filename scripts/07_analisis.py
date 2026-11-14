@@ -4,7 +4,9 @@ Uso:
     python scripts/07_analisis.py                  # WRF-SAAG
     python scripts/07_analisis.py --fuente pisco   # lo mismo con PISCO (archivos con prefijo pisco_)
 
-Escribe en figures/:
+Escribe en figures/ (con --fuente X, los nombres llevan el prefijo X_):
+    <fuente>_diaria_cuenca_<año>.csv   serie DIARIA de la cuenca: media, mediana, mín./máx. por celda,
+                                        % de la cuenca con lluvia (>= 1 mm) y días completos
     analisis_serie_diaria.png     lluvia diaria media de la cuenca, un panel por año
     analisis_anomalia_FMA.png     acumulado FMA de cada año menos el promedio de los años
     analisis_intensidad.png       distribución de la lluvia diaria (celdas con lluvia) por año
@@ -47,6 +49,20 @@ def main():
         tot = np.nansum(ds.pr.values, axis=0)
         tot[~mask] = np.nan
         totales[a] = tot
+        with np.errstate(all="ignore"):
+            diaria = pd.DataFrame({
+                "fecha": pd.DatetimeIndex(ds.time.values).strftime("%Y-%m-%d"),
+                "pr_media_cuenca_mm": media,
+                "pr_mediana_celdas_mm": np.nanmedian(pr, axis=1),
+                "pr_min_celda_mm": np.nanmin(pr, axis=1),
+                "pr_max_celda_mm": np.nanmax(pr, axis=1),
+                "pct_cuenca_con_lluvia": 100 * (pr >= UMBRAL).sum(axis=1) / np.isfinite(pr).sum(axis=1),
+                "dia_completo": np.isfinite(media),
+            }).round(2)
+        diaria.attrs = {}
+        nom = f"{mapas.FUENTE}_diaria_cuenca_{a}.csv"
+        diaria.to_csv(FIGURAS / nom, index=False)
+        print(f"  {nom}")
         moj = pr[pr >= UMBRAL]
         filas.append(dict(
             anio=a,

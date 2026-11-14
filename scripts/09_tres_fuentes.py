@@ -5,6 +5,7 @@ Uso (después de 03_diario_obs.py era5 y pisco):
 
 Escribe figures/tres_fuentes_resumen.csv: por año y fuente, total FMA de la cuenca, diferencia con PISCO (%),
 correlación diaria y semanal con PISCO, días con lluvia (>= 1 mm), días > 20 mm y percentil 95.
+Escribe figures/tres_fuentes_diaria.csv: lluvia diaria media de la cuenca (mm) de las tres fuentes, día por día.
 """
 import numpy as np
 import pandas as pd
@@ -30,7 +31,7 @@ def serie_ref(ref, anio, geom):
 
 def main():
     geom, nombre = c.mapas.cargar_cuenca(None)
-    filas = []
+    filas, diarias = [], []
     for a in ANIOS:
         sg = c.mapas.cargar(a)
         E, P = serie_ref("era5", a, geom), serie_ref("pisco", a, geom)
@@ -39,6 +40,7 @@ def main():
         m = c.mapas.mascara_celdas(sg, geom)
         S = pd.Series(np.nanmean(sg.pr.values[:, m], axis=1), index=pd.DatetimeIndex(sg.time.values))
         sem = lambda x: x.rolling(7, center=True).mean().dropna()
+        diarias.append(pd.DataFrame({"anio": a, "saag_mm": S, "era5_mm": E, "pisco_mm": P}))
         for nom, X in (("SAAG", S), ("ERA5", E), ("PISCO", P)):
             f = dict(anio=a, fuente=nom, total_FMA_mm=X.sum(), dias_lluvia=int((X >= 1).sum()),
                      dias_20mm=int((X >= 20).sum()), p95_mm=np.percentile(X, 95))
@@ -46,6 +48,10 @@ def main():
                 f.update(dif_vs_pisco_pct=100 * (X.sum() / P.sum() - 1), r_diaria=np.corrcoef(X, P)[0, 1],
                          r_7dias=np.corrcoef(sem(X), sem(P))[0, 1])
             filas.append(f)
+    d = pd.concat(diarias).round(2)
+    d.index = d.index.strftime("%Y-%m-%d"); d.index.name = "fecha"
+    d.to_csv(FIGURAS / "tres_fuentes_diaria.csv")
+    print(f"tres_fuentes_diaria.csv: {len(d)} días")
     t = pd.DataFrame(filas).round(2)
     t.to_csv(FIGURAS / "tres_fuentes_resumen.csv", index=False)
     print(t.to_string(index=False))
